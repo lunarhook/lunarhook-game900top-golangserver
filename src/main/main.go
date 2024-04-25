@@ -4,9 +4,9 @@ import (
 	_ "fmt"
 	"time"
 
-	Gamecontrollers2 "github.com/Jugendreisen/Tetris/src/server/Gamecontrollers"
-	Global2 "github.com/Jugendreisen/Tetris/src/server/Global"
 	"github.com/astaxie/beego"
+	Gamecontrollers2 "github.com/lunarhook/lunarhook-game900top-golangserver/src/server/Gamecontrollers"
+	Global2 "github.com/lunarhook/lunarhook-game900top-golangserver/src/server/Global"
 )
 
 type MainController struct {

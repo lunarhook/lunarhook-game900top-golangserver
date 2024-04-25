@@ -3,8 +3,8 @@ package Gamecontrollers
 import (
 	"net/http"
 
-	Global2 "github.com/Jugendreisen/Tetris/src/server/Global"
 	"github.com/gorilla/websocket"
+	Global2 "github.com/lunarhook/lunarhook-game900top-golangserver/src/server/Global"
 )
 
 // WebSocketController handles WebSocket requests.
@@ -26,12 +26,10 @@ func (this *WebSocketController) Get() {
 	this.Data["UserName"] = uname
 }
 
-
-
 // Join method handles WebSocket requests for WebSocketController.
 func (this *WebSocketController) Socket() {
 
-	SocketId,_ := this.GetUint32("SocketId")
+	SocketId, _ := this.GetUint32("SocketId")
 
 	var upgrader = websocket.Upgrader{
 		ReadBufferSize:  1024,
@@ -47,9 +45,6 @@ func (this *WebSocketController) Socket() {
 		return
 	}
 	// Join chat room. 后续所有的通信都不会在走这里而是走到join函数里循环
-	globaWebSocketListManager.SocketJoin(SocketId,ws)
+	globaWebSocketListManager.SocketJoin(SocketId, ws)
 
 }
-
-
-
