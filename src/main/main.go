@@ -23,6 +23,8 @@ func main() {
 	beego.Router("/join", &Gamecontrollers2.AppController{}, "post:Join")
 
 	// WebSocket.
+	beego.Router("/wss", &Gamecontrollers2.WebSocketController{})
+	beego.Router("/wss/socket", &Gamecontrollers2.WebSocketController{}, "get:Socket")
 	beego.Router("/ws", &Gamecontrollers2.WebSocketController{})
 	beego.Router("/ws/socket", &Gamecontrollers2.WebSocketController{}, "get:Socket")
 	beego.Run()
