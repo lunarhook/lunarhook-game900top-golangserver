@@ -4,14 +4,13 @@ import (
 	"container/list"
 	"encoding/json"
 	GpPacket "github.com/lunarhook/lunarhook-game900top-golangserver/src/server"
+	"github.com/lunarhook/lunarhook-game900top-golangserver/src/server/Global/Game"
 	"math/rand"
 	"time"
 
 	"github.com/astaxie/beego"
-	Global2 "github.com/lunarhook/lunarhook-game900top-golangserver/src/server/Global"
-	Game2 "github.com/lunarhook/lunarhook-game900top-golangserver/src/server/Global/Game"
-
 	"github.com/gorilla/websocket"
+	Global2 "github.com/lunarhook/lunarhook-game900top-golangserver/src/server/Global"
 )
 
 var globaWebSocketListManager *WebSocketListController
@@ -36,6 +35,7 @@ type WebSocketListController struct {
 	// Send events here to publish them.
 	MsgList chan (GpPacket.IM_protocol)
 	// Long polling waiting list.
+	runtimeGameList  chan Game.GameInit
 	ActiveSocketList *list.List
 	beego.Controller
 }
@@ -56,6 +56,8 @@ func init() {
 	globaWebSocketListManager.UnSocketChan = make(chan UnSocketId, 100)
 	// Send events here to publish them.
 	globaWebSocketListManager.MsgList = make(chan GpPacket.IM_protocol, 100)
+
+	globaWebSocketListManager.runtimeGameList = make(chan GpPacket.IM_protocol, 100)
 
 	globaWebSocketListManager.ActiveSocketList = list.New()
 
