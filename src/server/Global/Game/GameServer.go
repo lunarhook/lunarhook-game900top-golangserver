@@ -10,7 +10,7 @@ import (
 	GpPacket2 "github.com/lunarhook/lunarhook-game900top-golangserver/src/server"
 )
 
-type GameInit struct {
+type GameRoom struct {
 	Side       int    `json:"side"`
 	Width      int    `json:"width"`
 	Height     int    `json:"height"`
@@ -28,7 +28,7 @@ type GameInit struct {
 	Arr_store_color []string `json:"arr_store_color"`
 }
 
-var gGame *GameInit
+var gGame *GameRoom
 var loop bool
 
 var MsgList = make(chan string, 100)
@@ -447,7 +447,7 @@ func Start(event GpPacket2.IM_protocol) (GpPacket2.IM_protocol, bool) {
 }
 
 func GameRussia() {
-	gGame = &GameInit{}
+	gGame = &GameRoom{}
 	for {
 		time.Sleep(1000 * time.Millisecond)
 		if true == loop {

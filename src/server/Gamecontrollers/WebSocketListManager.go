@@ -35,7 +35,7 @@ type WebSocketListController struct {
 	// Send events here to publish them.
 	MsgList chan (GpPacket.IM_protocol)
 	// Long polling waiting list.
-	runtimeGameList  chan Game.GameInit
+	runtimeGameList  chan Game.GameRoom
 	ActiveSocketList *list.List
 	beego.Controller
 }
@@ -57,7 +57,7 @@ func init() {
 	// Send events here to publish them.
 	globaWebSocketListManager.MsgList = make(chan GpPacket.IM_protocol, 100)
 
-	globaWebSocketListManager.runtimeGameList = make(chan GpPacket.IM_protocol, 100)
+	globaWebSocketListManager.runtimeGameList = make(chan Game.GameRoom, 100)
 
 	globaWebSocketListManager.ActiveSocketList = list.New()
 
@@ -205,7 +205,7 @@ func (this *WebSocketListController) NetRussia() {
 		time.Sleep(400 * time.Millisecond)
 		event := GpPacket.IM_protocol{}
 		event.Type = GpPacket.IM_EVENT_BROADCAST_MESSAGE
-		ret, b := Game2.Start(event)
+		ret, b := Game.Start(event)
 		if true == b {
 			this.BCGame(ret)
 		}
@@ -215,7 +215,7 @@ func (this *WebSocketListController) Game(event GpPacket.IM_protocol) {
 	if "" == event.Msg {
 		return
 	}
-	ret, t := Game2.Start(event)
+	ret, t := Game.Start(event)
 	if true == t {
 		this.BCGame(ret)
 	}
