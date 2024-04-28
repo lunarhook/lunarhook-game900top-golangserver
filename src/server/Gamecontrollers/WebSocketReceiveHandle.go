@@ -12,20 +12,6 @@ type WebSocketController struct {
 	baseController
 }
 
-// Get method handles GET requests for WebSocketController.
-func (this *WebSocketController) Get() {
-	// Safe check.
-	uname := this.GetString("uname")
-	if len(uname) == 0 {
-		this.Redirect("/IM/", 302)
-		return
-	}
-
-	this.TplName = "websocket.html"
-	this.Data["IsWebSocket"] = true
-	this.Data["UserName"] = uname
-}
-
 // Join method handles WebSocket requests for WebSocketController.
 func (this *WebSocketController) Socket() {
 
