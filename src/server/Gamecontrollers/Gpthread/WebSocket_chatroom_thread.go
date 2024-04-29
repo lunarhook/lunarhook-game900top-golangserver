@@ -15,12 +15,12 @@ func Chatroom(Gthis *GpManager.WebSocketListController) {
 			if !Gthis.IsExistSocketById(JoinSocket.SocketId) {
 				Gthis.ActiveSocketList.PushBack(JoinSocket) // Add user to the end of list.
 				// Publish a JOIN event.
-				Gthis.MsgList <- Gphandle.NewMsg(Gthis, GpPacket.IM_S2C_JOIN, JoinSocket.User, JoinSocket.SocketId, "")
+				Gthis.MsgList <- Gphandle.GWebSocketStruct.NewMsg(Gthis, GpPacket.IM_S2C_JOIN, JoinSocket.User, JoinSocket.SocketId, "")
 
-				Gthis.MsgList <- Gphandle.NewMsg(Gthis, GpPacket.IM_EVENT_MESSAGE, JoinSocket.User, JoinSocket.SocketId, "welcome")
+				Gthis.MsgList <- Gphandle.GWebSocketStruct.NewMsg(Gthis, GpPacket.IM_EVENT_MESSAGE, JoinSocket.User, JoinSocket.SocketId, "welcome")
 				Global.Logger.Info("New socket:", JoinSocket.SocketId, ";WebSocket:", JoinSocket.Conn != nil)
 			} else {
-				Gthis.MsgList <- Gphandle.NewMsg(Gthis, GpPacket.IM_EVENT_MESSAGE, JoinSocket.User, JoinSocket.SocketId, "welcome")
+				Gthis.MsgList <- Gphandle.GWebSocketStruct.NewMsg(Gthis, GpPacket.IM_EVENT_MESSAGE, JoinSocket.User, JoinSocket.SocketId, "welcome")
 				Global.Logger.Info("Old socket:", JoinSocket.SocketId, ";WebSocket:", JoinSocket.Conn != nil)
 			}
 		case SocketMessage := <-Gthis.MsgList:
@@ -28,7 +28,7 @@ func Chatroom(Gthis *GpManager.WebSocketListController) {
 			switch SocketMessage.Type {
 			case
 				GpPacket.IM_C2S2C_HEART: // 心跳
-				Gphandle.HeartWebSocket(SocketMessage, Gthis)
+				Gphandle.GWebSocketStruct.HeartWebSocket(SocketMessage, Gthis)
 				break
 			case
 				GpPacket.IM_S2C_LEAVE: // 关闭房间完成比赛，退出游戏，展示结果
@@ -36,7 +36,7 @@ func Chatroom(Gthis *GpManager.WebSocketListController) {
 			case
 				GpPacket.IM_S2C_JOIN, //创建房间，显示房间列表
 				GpPacket.IM_EVENT_MESSAGE:
-				Gphandle.HeartWebSocket(SocketMessage, GpManager.GlobaWebSocketListManager)
+				Gphandle.GWebSocketStruct.HeartWebSocket(SocketMessage, GpManager.GlobaWebSocketListManager)
 				GameStart(SocketMessage, Gthis)
 				break
 			case
@@ -44,13 +44,13 @@ func Chatroom(Gthis *GpManager.WebSocketListController) {
 				break
 			case
 				GpPacket.IM_S2C_ROOMLIST: // 刷新房间列表
-				Gphandle.BroadcastWebSocket(SocketMessage, GpManager.GlobaWebSocketListManager)
+				Gphandle.GWebSocketStruct.BroadcastWebSocket(SocketMessage, GpManager.GlobaWebSocketListManager)
 				break
 			case
 				GpPacket.IM_EVENT_BROADCAST_HEART,
 
 				GpPacket.IM_EVENT_BROADCAST_MESSAGE:
-				Gphandle.BroadcastWebSocket(SocketMessage, GpManager.GlobaWebSocketListManager)
+				Gphandle.GWebSocketStruct.BroadcastWebSocket(SocketMessage, GpManager.GlobaWebSocketListManager)
 				break
 			}
 			GpPacket.NewArchive(SocketMessage)
@@ -69,7 +69,7 @@ func Chatroom(Gthis *GpManager.WebSocketListController) {
 						Global.Logger.Error("WebSocket closed:", LeaveSocket)
 					}
 
-					Gthis.MsgList <- Gphandle.NewMsg(Gthis, GpPacket.IM_S2C_LEAVE, sub.Value.(GpManager.SocketInfo).User, LeaveSocket.SocketId, "") // Publish a LEAVE event.
+					Gthis.MsgList <- Gphandle.GWebSocketStruct.NewMsg(Gthis, GpPacket.IM_S2C_LEAVE, sub.Value.(GpManager.SocketInfo).User, LeaveSocket.SocketId, "") // Publish a LEAVE event.
 					//Gthis.MsgList <- Gthis.NewMsg(GpPacket.IM_EVENT_BROADCAST_LEAVE, sub.Value.(SocketInfo).User, LeaveSocket.SocketId, "")
 					break
 				}

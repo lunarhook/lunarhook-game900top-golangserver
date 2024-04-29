@@ -20,5 +20,5 @@ func NetRussia(Gthis *GpManager.WebSocketListController) {
 	}
 }
 func BCGame(event GpPacket.IM_protocol, Gthis *GpManager.WebSocketListController) {
-	Gphandle.BroadcastWebSocket(event, Gthis)
+	Gphandle.GWebSocketStruct.BroadcastWebSocket(event, Gthis)
 }

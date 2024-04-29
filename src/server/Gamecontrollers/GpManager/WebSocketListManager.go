@@ -44,3 +44,5 @@ func (this *WebSocketListController) IsExistSocketById(SocketId uint32) bool {
 	}
 	return false
 }
+
+var GlobaWebSocketListManager *WebSocketListController

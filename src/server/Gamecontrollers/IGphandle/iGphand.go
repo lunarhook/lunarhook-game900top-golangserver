@@ -12,6 +12,17 @@ type Handlemanager struct {
 	beego.Controller
 }
 
-func (ih *Handlemanager) Api_socket() {
-	ih.ph.HandleSocket(ih.pC)
+func (p *Handlemanager) Api_socket() {
+	GHandlemanager.Controller = p.Controller
+	GHandlemanager.pC.Controller = p.Controller
+	GHandlemanager.ph.Controller = p.Controller
+	GHandlemanager.ph.HandleSocket(GHandlemanager.pC)
+}
+
+var GHandlemanager *Handlemanager
+
+func Init() {
+	GHandlemanager = &Handlemanager{}
+	GHandlemanager.pC = GpManager.GlobaWebSocketListManager
+	GHandlemanager.ph = Gphandle.GWebSocketStruct
 }

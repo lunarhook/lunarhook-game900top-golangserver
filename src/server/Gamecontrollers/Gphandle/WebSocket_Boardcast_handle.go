@@ -9,7 +9,7 @@ import (
 )
 
 // broadcastWebSocket broadcasts messages to WebSocket users.
-func (*WebSocketStruct) BroadcastWebSocket(event GpPacket.IM_protocol, Gpthis *GpManager.WebSocketListController) {
+func (this *WebSocketStruct) BroadcastWebSocket(event GpPacket.IM_protocol, Gpthis *GpManager.WebSocketListController) {
 	data, err := json.Marshal(event)
 	if err != nil {
 		Global.Logger.Error("Fail to marshal event:", err)

@@ -8,7 +8,7 @@ import (
 	Global "github.com/lunarhook/lunarhook-game900top-golangserver/src/server/Global"
 )
 
-func (*WebSocketStruct) HeartWebSocket(event GpPacket.IM_protocol, Gpthis *GpManager.WebSocketListController) {
+func (this *WebSocketStruct) HeartWebSocket(event GpPacket.IM_protocol, Gpthis *GpManager.WebSocketListController) {
 	data, err := json.Marshal(event)
 	if err != nil {
 		Global.Logger.Error("Fail to marshal event:", err)
