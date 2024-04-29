@@ -2,6 +2,7 @@ package main
 
 import (
 	_ "fmt"
+	"github.com/lunarhook/lunarhook-game900top-golangserver/src/server/Gamecontrollers/Gphandle"
 	"time"
 
 	"github.com/astaxie/beego"
@@ -23,10 +24,10 @@ func main() {
 	beego.Router("/join", &Gamecontrollers2.AppController{}, "post:Join")
 
 	// WebSocket.
-	beego.Router("/wss", &Gamecontrollers2.WebSocketController{})
-	beego.Router("/wss/socket", &Gamecontrollers2.WebSocketController{}, "get:Socket")
-	beego.Router("/ws", &Gamecontrollers2.WebSocketController{})
-	beego.Router("/ws/socket", &Gamecontrollers2.WebSocketController{}, "get:Socket")
+	beego.Router("/wss", &Gphandle.WebSocketController{})
+	beego.Router("/wss/socket", &Gphandle.WebSocketController{}, "get:Socket")
+	beego.Router("/ws", &Gphandle.WebSocketController{})
+	beego.Router("/ws/socket", &Gphandle.WebSocketController{}, "get:Socket")
 	beego.Run()
 
 }

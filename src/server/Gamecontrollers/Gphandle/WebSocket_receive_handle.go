@@ -1,6 +1,7 @@
-package Gamecontrollers
+package Gphandle
 
 import (
+	"github.com/lunarhook/lunarhook-game900top-golangserver/src/server/Gamecontrollers"
 	"net/http"
 
 	"github.com/gorilla/websocket"
@@ -9,7 +10,7 @@ import (
 
 // WebSocketController handles WebSocket requests.
 type WebSocketController struct {
-	baseController
+	Gamecontrollers.baseController
 }
 
 // Join method handles WebSocket requests for WebSocketController.
@@ -31,6 +32,6 @@ func (this *WebSocketController) Socket() {
 		return
 	}
 	// Join chat room. 后续所有的通信都不会在走这里而是走到join函数里循环
-	globaWebSocketListManager.SocketJoin(SocketId, ws)
+	Gamecontrollers.globaWebSocketListManager.SocketJoin(SocketId, ws)
 
 }
