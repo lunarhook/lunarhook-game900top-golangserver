@@ -8,11 +8,6 @@ import (
 	"github.com/lunarhook/lunarhook-game900top-golangserver/src/server/Gamecontrollers/Gpthread"
 )
 
-// WebSocketController handles WebSocket requests.
-type WebSocketController struct {
-	Gamecontrollers.baseController
-}
-
 var GlobaWebSocketListManager *WebSocketListController
 
 // 带用户信息的websocket
@@ -39,6 +34,11 @@ type WebSocketListController struct {
 	beego.Controller
 }
 
+// WebSocketController handles WebSocket requests.
+type WebSocketController struct {
+	baseController
+}
+
 func (this *WebSocketListController) IsExistSocketById(SocketId uint32) bool {
 	for sub := this.ActiveSocketList.Front(); sub != nil; sub = sub.Next() {
 		if sub.Value.(SocketInfo).SocketId == SocketId {
@@ -47,7 +47,6 @@ func (this *WebSocketListController) IsExistSocketById(SocketId uint32) bool {
 	}
 	return false
 }
-
 func init() {
 	GlobaWebSocketListManager = &WebSocketListController{}
 	GlobaWebSocketListManager.SocketChan = make(chan SocketInfo, 100)
