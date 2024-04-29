@@ -10,7 +10,7 @@ import (
 
 	"github.com/astaxie/beego"
 	"github.com/gorilla/websocket"
-	Global2 "github.com/lunarhook/lunarhook-game900top-golangserver/src/server/Global"
+	Global "github.com/lunarhook/lunarhook-game900top-golangserver/src/server/Global"
 )
 
 var globaWebSocketListManager *WebSocketListController
@@ -35,7 +35,6 @@ type WebSocketListController struct {
 	// Send events here to publish them.
 	MsgList chan (GpPacket.IM_protocol)
 	// Long polling waiting list.
-	runtimeGameList  chan Game.GameRoom
 	ActiveSocketList *list.List
 	beego.Controller
 }
@@ -57,8 +56,6 @@ func init() {
 	// Send events here to publish them.
 	globaWebSocketListManager.MsgList = make(chan GpPacket.IM_protocol, 100)
 
-	globaWebSocketListManager.runtimeGameList = make(chan Game.GameRoom, 100)
-
 	globaWebSocketListManager.ActiveSocketList = list.New()
 
 	go globaWebSocketListManager.chatroom()
@@ -67,7 +64,7 @@ func init() {
 
 func (this *WebSocketListController) SocketLeave(SocketId uint32) {
 	this.UnSocketChan <- UnSocketId{SocketId}
-	Global2.Logger.Info("Socket Leave:", SocketId)
+	Global.Logger.Info("Socket Leave:", SocketId)
 }
 
 func (this *WebSocketListController) SocketJoin(SocketId uint32, ws *websocket.Conn) {
@@ -105,7 +102,7 @@ func (this *WebSocketListController) SocketJoin(SocketId uint32, ws *websocket.C
 			//G.Logger.Info(info)
 
 		} else {
-			Global2.Logger.Error("Join", err)
+			Global.Logger.Error("Join", err)
 		}
 
 	}
@@ -116,81 +113,11 @@ func (this *WebSocketListController) NewMsg(ep GpPacket.EventType, user GpPacket
 	return GpPacket.IM_protocol{ep, msg, SocketId, user, int(time.Now().Unix())}
 }
 
-func (this *WebSocketListController) chatroom() {
-	for {
-		select {
-		case JoinSocket := <-this.SocketChan:
-			if !this.IsExistSocketById(JoinSocket.SocketId) {
-				this.ActiveSocketList.PushBack(JoinSocket) // Add user to the end of list.
-				// Publish a JOIN event.
-				this.MsgList <- this.NewMsg(GpPacket.IM_S2C_JOIN, JoinSocket.User, JoinSocket.SocketId, "")
-
-				this.MsgList <- this.NewMsg(GpPacket.IM_EVENT_MESSAGE, JoinSocket.User, JoinSocket.SocketId, "welcome")
-				Global2.Logger.Info("New socket:", JoinSocket.SocketId, ";WebSocket:", JoinSocket.Conn != nil)
-			} else {
-				this.MsgList <- this.NewMsg(GpPacket.IM_EVENT_MESSAGE, JoinSocket.User, JoinSocket.SocketId, "welcome")
-				Global2.Logger.Info("Old socket:", JoinSocket.SocketId, ";WebSocket:", JoinSocket.Conn != nil)
-			}
-		case SocketMessage := <-this.MsgList:
-			//如果是心跳，单发
-			switch SocketMessage.Type {
-			case
-				GpPacket.IM_C2S2C_HEART: // 心跳
-				this.HeartWebSocket(SocketMessage)
-				break
-			case
-				GpPacket.IM_S2C_LEAVE: // 关闭房间完成比赛，退出游戏，展示结果
-				break
-			case
-				GpPacket.IM_S2C_JOIN, //创建房间，显示房间列表
-				GpPacket.IM_EVENT_MESSAGE:
-				this.HeartWebSocket(SocketMessage)
-				this.Game(SocketMessage)
-				break
-			case
-				GpPacket.IM_S2C_CREATROOM: //创建房间等待对手加入
-				break
-			case
-				GpPacket.IM_S2C_ROOMLIST: // 刷新房间列表
-				this.broadcastWebSocket(SocketMessage)
-				break
-			case
-				GpPacket.IM_EVENT_BROADCAST_HEART,
-
-				GpPacket.IM_EVENT_BROADCAST_MESSAGE:
-				this.broadcastWebSocket(SocketMessage)
-				break
-			}
-			GpPacket.NewArchive(SocketMessage)
-			if SocketMessage.Type == GpPacket.IM_EVENT_MESSAGE {
-				Global2.Logger.Info("Message from", SocketMessage.Users.From, ";Msg:", SocketMessage.Msg)
-			}
-
-		case LeaveSocket := <-this.UnSocketChan:
-			for sub := this.ActiveSocketList.Front(); sub != nil; sub = sub.Next() {
-				if sub.Value.(SocketInfo).SocketId == LeaveSocket.SocketId {
-					this.ActiveSocketList.Remove(sub)
-					// Clone connection.
-					ws := sub.Value.(SocketInfo).Conn
-					if ws != nil {
-						ws.Close()
-						Global2.Logger.Error("WebSocket closed:", LeaveSocket)
-					}
-
-					this.MsgList <- this.NewMsg(GpPacket.IM_S2C_LEAVE, sub.Value.(SocketInfo).User, LeaveSocket.SocketId, "") // Publish a LEAVE event.
-					this.MsgList <- this.NewMsg(GpPacket.IM_EVENT_BROADCAST_LEAVE, sub.Value.(SocketInfo).User, LeaveSocket.SocketId, "")
-					break
-				}
-			}
-		}
-	}
-}
-
 // broadcastWebSocket broadcasts messages to WebSocket users.
 func (this *WebSocketListController) broadcastWebSocket(event GpPacket.IM_protocol) {
 	data, err := json.Marshal(event)
 	if err != nil {
-		Global2.Logger.Error("Fail to marshal event:", err)
+		Global.Logger.Error("Fail to marshal event:", err)
 		return
 	}
 
@@ -201,7 +128,7 @@ func (this *WebSocketListController) broadcastWebSocket(event GpPacket.IM_protoc
 
 			if ws.WriteMessage(websocket.TextMessage, data) != nil {
 				// User disconnected.
-				Global2.Logger.Trace("disconnected user:", sub.Value.(SocketInfo).User)
+				Global.Logger.Trace("disconnected user:", sub.Value.(SocketInfo).User)
 				this.UnSocketChan <- UnSocketId{sub.Value.(SocketInfo).SocketId}
 
 			}
@@ -223,6 +150,7 @@ func (this *WebSocketListController) NetRussia() {
 		}
 	}
 }
+
 func (this *WebSocketListController) Game(event GpPacket.IM_protocol) {
 	if "" == event.Msg {
 		return
@@ -232,26 +160,4 @@ func (this *WebSocketListController) Game(event GpPacket.IM_protocol) {
 		this.BCGame(ret)
 	}
 
-}
-func (this *WebSocketListController) HeartWebSocket(event GpPacket.IM_protocol) {
-	data, err := json.Marshal(event)
-	if err != nil {
-		Global2.Logger.Error("Fail to marshal event:", err)
-		return
-	}
-
-	for sub := this.ActiveSocketList.Front(); sub != nil; sub = sub.Next() {
-		// Immediately send event to WebSocket users.
-		if sub.Value.(SocketInfo).SocketId == event.SocketId {
-			ws := sub.Value.(SocketInfo).Conn
-			if ws != nil {
-				if ws.WriteMessage(websocket.TextMessage, data) != nil {
-					// socket disconnected.
-					this.UnSocketChan <- UnSocketId{sub.Value.(SocketInfo).SocketId}
-				} else {
-					Global2.Logger.Trace("Socketheart :", event.SocketId)
-				}
-			}
-		}
-	}
 }

@@ -10,15 +10,6 @@ import (
 	GpPacket "github.com/lunarhook/lunarhook-game900top-golangserver/src/server"
 )
 
-type GameTopRoom struct {
-	Total    int      `json:"total"`
-	wordlist []string `json:"wordlist"`
-	playa    []string `json:"playa"`
-	playb    []string `json:"playb"`
-	scorceA  int      `json:"scorceA"`
-	scorceB  int      `json:"scorceB"`
-	runplay  bool
-}
 type GameRoom struct {
 	Side       int    `json:"side"`
 	Width      int    `json:"width"`
@@ -36,8 +27,6 @@ type GameRoom struct {
 	Arr_store_Y     []int    `json:"arr_store_Y"`
 	Arr_store_color []string `json:"arr_store_color"`
 }
-
-var gGameTop *([]GameTopRoom)
 
 var gGame *GameRoom
 var loop bool
@@ -73,17 +62,7 @@ func initgame(event GpPacket.IM_protocol) {
 	jsons, error = json.Marshal(field)
 	MsgList <- string(jsons)
 }
-func GameTopRoom_tick() {
-	lens := len(*gGameTop)
-	for i := 0; i < lens; i++ {
-		if true == (*gGameTop)[i].runplay {
 
-		}
-	}
-	ClearUnderBlock()
-	MsgReturn()
-	gameover()
-}
 func Down_speed_up_tick() {
 	flag_all_down := true
 	flag_all_down = JudgeCollision_down()
@@ -465,19 +444,6 @@ func Start(event GpPacket.IM_protocol) (GpPacket.IM_protocol, bool) {
 
 	//这里返回要客户端重新开始游戏
 	return event, false
-}
-func BuildServerRoom() {
-	var GameTopRoomList = make([]GameTopRoom, 100)
-	gGameTop = &GameTopRoomList
-	for {
-		time.Sleep(1000 * time.Millisecond)
-		if true == loop {
-
-		} else {
-			gGameTop = nil
-			return
-		}
-	}
 }
 
 func GameRussia() {
