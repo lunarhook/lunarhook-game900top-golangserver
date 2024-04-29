@@ -2,13 +2,13 @@ package Gpthread
 
 import (
 	GpPacket "github.com/lunarhook/lunarhook-game900top-golangserver/src/server"
-	"github.com/lunarhook/lunarhook-game900top-golangserver/src/server/Gamecontrollers"
+	"github.com/lunarhook/lunarhook-game900top-golangserver/src/server/Gamecontrollers/GpManager"
 	"github.com/lunarhook/lunarhook-game900top-golangserver/src/server/Gamecontrollers/Gphandle"
 	Global "github.com/lunarhook/lunarhook-game900top-golangserver/src/server/Global"
 	"github.com/lunarhook/lunarhook-game900top-golangserver/src/server/Global/GpGame"
 )
 
-func Chatroom(Gthis *Gamecontrollers.WebSocketListController) {
+func Chatroom(Gthis *GpManager.WebSocketListController) {
 	for {
 		select {
 		case JoinSocket := <-Gthis.SocketChan:
@@ -36,7 +36,7 @@ func Chatroom(Gthis *Gamecontrollers.WebSocketListController) {
 			case
 				GpPacket.IM_S2C_JOIN, //创建房间，显示房间列表
 				GpPacket.IM_EVENT_MESSAGE:
-				Gphandle.HeartWebSocket(SocketMessage, Gamecontrollers.GlobaWebSocketListManager)
+				Gphandle.HeartWebSocket(SocketMessage, GpManager.GlobaWebSocketListManager)
 				GameStart(SocketMessage, Gthis)
 				break
 			case
@@ -44,13 +44,13 @@ func Chatroom(Gthis *Gamecontrollers.WebSocketListController) {
 				break
 			case
 				GpPacket.IM_S2C_ROOMLIST: // 刷新房间列表
-				Gphandle.BroadcastWebSocket(SocketMessage, Gamecontrollers.GlobaWebSocketListManager)
+				Gphandle.BroadcastWebSocket(SocketMessage, GpManager.GlobaWebSocketListManager)
 				break
 			case
 				GpPacket.IM_EVENT_BROADCAST_HEART,
 
 				GpPacket.IM_EVENT_BROADCAST_MESSAGE:
-				Gphandle.BroadcastWebSocket(SocketMessage, Gamecontrollers.GlobaWebSocketListManager)
+				Gphandle.BroadcastWebSocket(SocketMessage, GpManager.GlobaWebSocketListManager)
 				break
 			}
 			GpPacket.NewArchive(SocketMessage)
@@ -60,16 +60,16 @@ func Chatroom(Gthis *Gamecontrollers.WebSocketListController) {
 
 		case LeaveSocket := <-Gthis.UnSocketChan:
 			for sub := Gthis.ActiveSocketList.Front(); sub != nil; sub = sub.Next() {
-				if sub.Value.(Gamecontrollers.SocketInfo).SocketId == LeaveSocket.SocketId {
+				if sub.Value.(GpManager.SocketInfo).SocketId == LeaveSocket.SocketId {
 					Gthis.ActiveSocketList.Remove(sub)
 					// Clone connection.
-					ws := sub.Value.(Gamecontrollers.SocketInfo).Conn
+					ws := sub.Value.(GpManager.SocketInfo).Conn
 					if ws != nil {
 						ws.Close()
 						Global.Logger.Error("WebSocket closed:", LeaveSocket)
 					}
 
-					Gthis.MsgList <- Gphandle.NewMsg(Gthis, GpPacket.IM_S2C_LEAVE, sub.Value.(Gamecontrollers.SocketInfo).User, LeaveSocket.SocketId, "") // Publish a LEAVE event.
+					Gthis.MsgList <- Gphandle.NewMsg(Gthis, GpPacket.IM_S2C_LEAVE, sub.Value.(GpManager.SocketInfo).User, LeaveSocket.SocketId, "") // Publish a LEAVE event.
 					//Gthis.MsgList <- Gthis.NewMsg(GpPacket.IM_EVENT_BROADCAST_LEAVE, sub.Value.(SocketInfo).User, LeaveSocket.SocketId, "")
 					break
 				}
@@ -77,7 +77,7 @@ func Chatroom(Gthis *Gamecontrollers.WebSocketListController) {
 		}
 	}
 }
-func GameStart(event GpPacket.IM_protocol, Gthis *Gamecontrollers.WebSocketListController) {
+func GameStart(event GpPacket.IM_protocol, Gthis *GpManager.WebSocketListController) {
 	if "" == event.Msg {
 		return
 	}

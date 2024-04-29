@@ -1,14 +1,11 @@
-package Gamecontrollers
+package GpManager
 
 import (
 	"container/list"
 	"github.com/astaxie/beego"
 	"github.com/gorilla/websocket"
 	GpPacket "github.com/lunarhook/lunarhook-game900top-golangserver/src/server"
-	"github.com/lunarhook/lunarhook-game900top-golangserver/src/server/Gamecontrollers/Gpthread"
 )
-
-var GlobaWebSocketListManager *WebSocketListController
 
 // 带用户信息的websocket
 type SocketInfo struct {
@@ -46,17 +43,4 @@ func (this *WebSocketListController) IsExistSocketById(SocketId uint32) bool {
 		}
 	}
 	return false
-}
-func init() {
-	GlobaWebSocketListManager = &WebSocketListController{}
-	GlobaWebSocketListManager.SocketChan = make(chan SocketInfo, 100)
-	// Channel for exit users.
-	GlobaWebSocketListManager.UnSocketChan = make(chan UnSocketId, 100)
-	// Send events here to publish them.
-	GlobaWebSocketListManager.MsgList = make(chan GpPacket.IM_protocol, 100)
-
-	GlobaWebSocketListManager.ActiveSocketList = list.New()
-
-	go Gpthread.Chatroom(GlobaWebSocketListManager)
-	go Gpthread.NetRussia(GlobaWebSocketListManager)
 }

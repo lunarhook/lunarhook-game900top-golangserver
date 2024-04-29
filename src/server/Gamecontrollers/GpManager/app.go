@@ -1,10 +1,9 @@
-package Gamecontrollers
+package GpManager
 
 import (
 	"github.com/astaxie/beego"
 	"github.com/beego/i18n"
 )
-
 
 // baseController represents base router for all other app routers.
 // It implemented some methods for the same implementation;
@@ -59,9 +58,7 @@ func (this *AppController) Join() {
 		return
 	}
 
-
 	this.Redirect("/IM/ws?uname="+uname, 302)
-
 
 	// Usually put return after redirect.
 	return
