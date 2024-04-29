@@ -2,15 +2,16 @@ package Gamecontrollers
 
 import (
 	"container/list"
-	GpPacket "github.com/lunarhook/lunarhook-game900top-golangserver/src/server"
-	"github.com/lunarhook/lunarhook-game900top-golangserver/src/server/Gamecontrollers/Gphandle"
-	"github.com/lunarhook/lunarhook-game900top-golangserver/src/server/Gamecontrollers/Gpthread"
-	"github.com/lunarhook/lunarhook-game900top-golangserver/src/server/Global/Game"
-	"time"
-
 	"github.com/astaxie/beego"
 	"github.com/gorilla/websocket"
+	GpPacket "github.com/lunarhook/lunarhook-game900top-golangserver/src/server"
+	"github.com/lunarhook/lunarhook-game900top-golangserver/src/server/Gamecontrollers/Gpthread"
 )
+
+// WebSocketController handles WebSocket requests.
+type WebSocketController struct {
+	Gamecontrollers.baseController
+}
 
 var GlobaWebSocketListManager *WebSocketListController
 
@@ -59,23 +60,4 @@ func init() {
 
 	go Gpthread.Chatroom(GlobaWebSocketListManager)
 	go Gpthread.NetRussia(GlobaWebSocketListManager)
-}
-
-func (this *WebSocketListController) NewMsg(ep GpPacket.EventType, user GpPacket.IM_protocol_user, SocketId uint32, msg string) GpPacket.IM_protocol {
-	return GpPacket.IM_protocol{ep, msg, SocketId, user, int(time.Now().Unix())}
-}
-
-func (this *WebSocketListController) BCGame(event GpPacket.IM_protocol) {
-	Gphandle.BroadcastWebSocket(event, GlobaWebSocketListManager)
-}
-
-func (this *WebSocketListController) Game(event GpPacket.IM_protocol) {
-	if "" == event.Msg {
-		return
-	}
-	ret, t := Game.Start(event)
-	if true == t {
-		this.BCGame(ret)
-	}
-
 }

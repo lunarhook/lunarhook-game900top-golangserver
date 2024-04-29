@@ -3,7 +3,8 @@ package Gpthread
 import (
 	GpPacket "github.com/lunarhook/lunarhook-game900top-golangserver/src/server"
 	"github.com/lunarhook/lunarhook-game900top-golangserver/src/server/Gamecontrollers"
-	"github.com/lunarhook/lunarhook-game900top-golangserver/src/server/Global/Game"
+	"github.com/lunarhook/lunarhook-game900top-golangserver/src/server/Gamecontrollers/Gphandle"
+	"github.com/lunarhook/lunarhook-game900top-golangserver/src/server/Global/GpGame"
 	"time"
 )
 
@@ -12,9 +13,12 @@ func NetRussia(Gthis *Gamecontrollers.WebSocketListController) {
 		time.Sleep(400 * time.Millisecond)
 		event := GpPacket.IM_protocol{}
 		event.Type = GpPacket.IM_EVENT_BROADCAST_MESSAGE
-		ret, b := Game.Start(event)
+		ret, b := GpGame.Start(event)
 		if true == b {
-			Gthis.BCGame(ret)
+			BCGame(ret, Gthis)
 		}
 	}
+}
+func BCGame(event GpPacket.IM_protocol, Gthis *Gamecontrollers.WebSocketListController) {
+	Gphandle.BroadcastWebSocket(event, Gthis)
 }

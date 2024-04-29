@@ -41,7 +41,7 @@ func SocketJoin(SocketId uint32, ws *websocket.Conn, Gpthis *Gamecontrollers.Web
 		}
 		var info GpPacket.IM_protocol
 		if err := json.Unmarshal([]byte(p), &info); err == nil {
-			Gpthis.MsgList <- Gpthis.NewMsg(info.Type, info.Users, info.SocketId, string(info.Msg))
+			Gpthis.MsgList <- Gphandle.NewMsg(Gpthis, info.Type, info.Users, info.SocketId, string(info.Msg))
 			//G.Logger.Info(info)
 
 		} else {

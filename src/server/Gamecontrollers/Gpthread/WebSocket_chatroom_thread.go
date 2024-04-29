@@ -5,6 +5,7 @@ import (
 	"github.com/lunarhook/lunarhook-game900top-golangserver/src/server/Gamecontrollers"
 	"github.com/lunarhook/lunarhook-game900top-golangserver/src/server/Gamecontrollers/Gphandle"
 	Global "github.com/lunarhook/lunarhook-game900top-golangserver/src/server/Global"
+	"github.com/lunarhook/lunarhook-game900top-golangserver/src/server/Global/GpGame"
 )
 
 func Chatroom(Gthis *Gamecontrollers.WebSocketListController) {
@@ -14,12 +15,12 @@ func Chatroom(Gthis *Gamecontrollers.WebSocketListController) {
 			if !Gthis.IsExistSocketById(JoinSocket.SocketId) {
 				Gthis.ActiveSocketList.PushBack(JoinSocket) // Add user to the end of list.
 				// Publish a JOIN event.
-				Gthis.MsgList <- Gthis.NewMsg(GpPacket.IM_S2C_JOIN, JoinSocket.User, JoinSocket.SocketId, "")
+				Gthis.MsgList <- Gphandle.NewMsg(Gthis, GpPacket.IM_S2C_JOIN, JoinSocket.User, JoinSocket.SocketId, "")
 
-				Gthis.MsgList <- Gthis.NewMsg(GpPacket.IM_EVENT_MESSAGE, JoinSocket.User, JoinSocket.SocketId, "welcome")
+				Gthis.MsgList <- Gphandle.NewMsg(Gthis, GpPacket.IM_EVENT_MESSAGE, JoinSocket.User, JoinSocket.SocketId, "welcome")
 				Global.Logger.Info("New socket:", JoinSocket.SocketId, ";WebSocket:", JoinSocket.Conn != nil)
 			} else {
-				Gthis.MsgList <- Gthis.NewMsg(GpPacket.IM_EVENT_MESSAGE, JoinSocket.User, JoinSocket.SocketId, "welcome")
+				Gthis.MsgList <- Gphandle.NewMsg(Gthis, GpPacket.IM_EVENT_MESSAGE, JoinSocket.User, JoinSocket.SocketId, "welcome")
 				Global.Logger.Info("Old socket:", JoinSocket.SocketId, ";WebSocket:", JoinSocket.Conn != nil)
 			}
 		case SocketMessage := <-Gthis.MsgList:
@@ -27,7 +28,7 @@ func Chatroom(Gthis *Gamecontrollers.WebSocketListController) {
 			switch SocketMessage.Type {
 			case
 				GpPacket.IM_C2S2C_HEART: // 心跳
-				Gphandle.HeartWebSocket(SocketMessage)
+				Gphandle.HeartWebSocket(SocketMessage, Gthis)
 				break
 			case
 				GpPacket.IM_S2C_LEAVE: // 关闭房间完成比赛，退出游戏，展示结果
@@ -36,7 +37,7 @@ func Chatroom(Gthis *Gamecontrollers.WebSocketListController) {
 				GpPacket.IM_S2C_JOIN, //创建房间，显示房间列表
 				GpPacket.IM_EVENT_MESSAGE:
 				Gphandle.HeartWebSocket(SocketMessage, Gamecontrollers.GlobaWebSocketListManager)
-				Gthis.Game(SocketMessage)
+				GameStart(SocketMessage, Gthis)
 				break
 			case
 				GpPacket.IM_S2C_CREATROOM: //创建房间等待对手加入
@@ -68,11 +69,21 @@ func Chatroom(Gthis *Gamecontrollers.WebSocketListController) {
 						Global.Logger.Error("WebSocket closed:", LeaveSocket)
 					}
 
-					Gthis.MsgList <- Gthis.NewMsg(GpPacket.IM_S2C_LEAVE, sub.Value.(Gamecontrollers.SocketInfo).User, LeaveSocket.SocketId, "") // Publish a LEAVE event.
+					Gthis.MsgList <- Gphandle.NewMsg(Gthis, GpPacket.IM_S2C_LEAVE, sub.Value.(Gamecontrollers.SocketInfo).User, LeaveSocket.SocketId, "") // Publish a LEAVE event.
 					//Gthis.MsgList <- Gthis.NewMsg(GpPacket.IM_EVENT_BROADCAST_LEAVE, sub.Value.(SocketInfo).User, LeaveSocket.SocketId, "")
 					break
 				}
 			}
 		}
 	}
+}
+func GameStart(event GpPacket.IM_protocol, Gthis *Gamecontrollers.WebSocketListController) {
+	if "" == event.Msg {
+		return
+	}
+	ret, t := GpGame.Start(event)
+	if true == t {
+		BCGame(ret, Gthis)
+	}
+
 }
