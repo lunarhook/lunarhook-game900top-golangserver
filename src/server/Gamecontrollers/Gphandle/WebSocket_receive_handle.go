@@ -14,24 +14,24 @@ type WebSocketController struct {
 }
 
 // Join method handles WebSocket requests for WebSocketController.
-func (this *WebSocketController) Socket() {
+func Socket(Gpthis *Gamecontrollers.WebSocketListController) {
 
-	SocketId, _ := this.GetUint32("SocketId")
+	SocketId, _ := Gpthis.GetUint32("SocketId")
 
 	var upgrader = websocket.Upgrader{
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
 	}
 	// Upgrade from http request to WebSocket.
-	ws, err := upgrader.Upgrade(this.Ctx.ResponseWriter, this.Ctx.Request, nil)
+	ws, err := upgrader.Upgrade(Gpthis.Ctx.ResponseWriter, Gpthis.Ctx.Request, nil)
 	if _, ok := err.(websocket.HandshakeError); ok {
-		http.Error(this.Ctx.ResponseWriter, "Not a websocket handshake", 400)
+		http.Error(Gpthis.Ctx.ResponseWriter, "Not a websocket handshake", 400)
 		return
 	} else if err != nil {
 		Global.Logger.Error("Cannot setup deivce WebSocket connection:", err)
 		return
 	}
 	// Join chat room. 后续所有的通信都不会在走这里而是走到join函数里循环
-	Gamecontrollers.globaWebSocketListManager.SocketJoin(SocketId, ws)
+	Gpthis.SocketJoin(SocketId, ws)
 
 }
