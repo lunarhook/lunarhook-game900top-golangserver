@@ -1,6 +1,8 @@
 package Gpthread
 
 import (
+	"encoding/json"
+	"github.com/gorilla/websocket"
 	GpPacket "github.com/lunarhook/lunarhook-game900top-golangserver/src/server"
 	"github.com/lunarhook/lunarhook-game900top-golangserver/src/server/Gamecontrollers/GpManager"
 	"github.com/lunarhook/lunarhook-game900top-golangserver/src/server/Gamecontrollers/Gphandle"
@@ -38,6 +40,7 @@ func Chatroom(Gthis *GpManager.WebSocketListController) {
 				GpPacket.IM_EVENT_MESSAGE:
 				Gphandle.GWebSocketStruct.HeartWebSocket(SocketMessage, GpManager.GlobaWebSocketListManager)
 				GameStart(SocketMessage, Gthis)
+				GetRoomList(Gthis)
 				break
 			case
 				GpPacket.IM_S2C_CREATROOM: //创建房间等待对手加入
@@ -77,6 +80,7 @@ func Chatroom(Gthis *GpManager.WebSocketListController) {
 		}
 	}
 }
+
 func GameStart(event GpPacket.IM_protocol, Gthis *GpManager.WebSocketListController) {
 	if "" == event.Msg {
 		return
@@ -86,4 +90,28 @@ func GameStart(event GpPacket.IM_protocol, Gthis *GpManager.WebSocketListControl
 		BCGame(ret, Gthis)
 	}
 
+}
+func GetRoomList(Gpthis *GpManager.WebSocketListController) {
+	ret := GpGame.GetRoomList()
+	event := GpPacket.Protocol_getroomlist{}
+	event.Type = GpPacket.IM_S2C_ROOMLIST
+	event.List = ret
+	data, err := json.Marshal(event)
+	if err != nil {
+		Global.Logger.Error("Fail to marshal event:", err)
+		return
+	}
+	for sub := Gpthis.ActiveSocketList.Front(); sub != nil; sub = sub.Next() {
+		// Immediately send event to WebSocket users.
+		ws := sub.Value.(GpManager.SocketInfo).Conn
+		if ws != nil {
+
+			if ws.WriteMessage(websocket.TextMessage, data) != nil {
+				// User disconnected.
+				Global.Logger.Trace("disconnected user:", sub.Value.(GpManager.SocketInfo).User)
+				Gpthis.UnSocketChan <- GpManager.UnSocketId{sub.Value.(GpManager.SocketInfo).SocketId}
+
+			}
+		}
+	}
 }

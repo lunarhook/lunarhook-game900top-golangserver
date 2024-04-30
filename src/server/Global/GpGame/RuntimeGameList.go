@@ -1,9 +1,7 @@
 package GpGame
 
-import "time"
-
 type GameTopRoom struct {
-	Total    int      `json:"total"`
+	id       int      `json:"id"`
 	wordlist []string `json:"wordlist"`
 	playa    []string `json:"playa"`
 	playb    []string `json:"playb"`
@@ -26,15 +24,17 @@ func GameTopRoom_tick() {
 	gameover()
 }
 func BuildServerRoom() {
-	var GameTopRoomList = make([]GameTopRoom, 100)
+	var GameTopRoomList = (make([]GameTopRoom, 3))
 	gGameTop = &GameTopRoomList
-	for {
-		time.Sleep(1000 * time.Millisecond)
-		if true == loop {
+}
 
-		} else {
-			gGameTop = nil
-			return
+func GetRoomList() []int {
+	lens := len(*gGameTop)
+	reslist := []int{}
+	for i := 0; i < lens; i++ {
+		if false == (*gGameTop)[i].runplay {
+			reslist = append(reslist, (*gGameTop)[i].id)
 		}
 	}
+	return reslist
 }

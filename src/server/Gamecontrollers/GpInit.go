@@ -6,6 +6,7 @@ import (
 	"github.com/lunarhook/lunarhook-game900top-golangserver/src/server/Gamecontrollers/GpManager"
 	"github.com/lunarhook/lunarhook-game900top-golangserver/src/server/Gamecontrollers/Gphandle"
 	"github.com/lunarhook/lunarhook-game900top-golangserver/src/server/Gamecontrollers/Gpthread"
+	"github.com/lunarhook/lunarhook-game900top-golangserver/src/server/Global/GpGame"
 )
 
 func Init() {
@@ -18,6 +19,8 @@ func Init() {
 	GpManager.GlobaWebSocketListManager.MsgList = make(chan GpPacket.IM_protocol, 100)
 
 	GpManager.GlobaWebSocketListManager.ActiveSocketList = list.New()
+
+	GpGame.BuildServerRoom()
 
 	go Gpthread.Chatroom(GpManager.GlobaWebSocketListManager)
 	go Gpthread.NetRussia(GpManager.GlobaWebSocketListManager)

@@ -34,6 +34,13 @@ type IM_protocol struct {
 	Timestamp int // Unix timestamp (secs)
 }
 
+type Protocol_getroomlist struct {
+	Type      EventType // JOIN, LEAVE, MESSAGE
+	List      []int
+	SocketId  uint32
+	Timestamp int // Unix timestamp (secs)
+}
+
 const archiveSize = 100
 
 // Event archives.
