@@ -29,31 +29,34 @@ func Chatroom(Gthis *GpManager.WebSocketListController) {
 			//如果是心跳，单发
 			switch SocketMessage.Type {
 			case
+				GpPacket.IM_EVENT_MESSAGE,
 				GpPacket.IM_C2S2C_HEART: // 心跳
 				Gphandle.GWebSocketStruct.HeartWebSocket(SocketMessage, Gthis)
 				break
 			case
-				GpPacket.IM_S2C_LEAVE: // 关闭房间完成比赛，退出游戏，展示结果
+				GpPacket.IM_S2C_LEAVEROOM: // 关闭房间完成比赛，退出游戏，展示结果
 				break
 			case
-				GpPacket.IM_S2C_JOIN, //创建房间，显示房间列表
-				GpPacket.IM_EVENT_MESSAGE:
+				GpPacket.IM_S2C_JOIN: //创建房间，显示房间列表
 				Gphandle.GWebSocketStruct.HeartWebSocket(SocketMessage, GpManager.GlobaWebSocketListManager)
-				GameStart(SocketMessage, Gthis)
-				GetRoomList(Gthis)
 				break
 			case
-				GpPacket.IM_S2C_CREATROOM: //创建房间等待对手加入
+				GpPacket.IM_S2C_JOINCREATROOM: //创建房间等待对手加入
 				break
 			case
-				GpPacket.IM_S2C_ROOMLIST: // 刷新房间列表
+				GpPacket.IM_C2S_GETROOMLIST: // 刷新房间列
+				GetRoomList(SocketMessage, Gthis)
+				break
+			case
+				GpPacket.IM_EVENT_BROADCAST_HEART:
 				Gphandle.GWebSocketStruct.BroadcastWebSocket(SocketMessage, GpManager.GlobaWebSocketListManager)
 				break
 			case
-				GpPacket.IM_EVENT_BROADCAST_HEART,
-
 				GpPacket.IM_EVENT_BROADCAST_MESSAGE:
 				Gphandle.GWebSocketStruct.BroadcastWebSocket(SocketMessage, GpManager.GlobaWebSocketListManager)
+				break
+			default:
+				Gphandle.GWebSocketStruct.HeartWebSocket(SocketMessage, GpManager.GlobaWebSocketListManager)
 				break
 			}
 			GpPacket.NewArchive(SocketMessage)
@@ -72,7 +75,7 @@ func Chatroom(Gthis *GpManager.WebSocketListController) {
 						Global.Logger.Error("WebSocket closed:", LeaveSocket)
 					}
 
-					Gthis.MsgList <- Gphandle.GWebSocketStruct.NewMsg(Gthis, GpPacket.IM_S2C_LEAVE, sub.Value.(GpManager.SocketInfo).User, LeaveSocket.SocketId, "") // Publish a LEAVE event.
+					Gthis.MsgList <- Gphandle.GWebSocketStruct.NewMsg(Gthis, GpPacket.IM_S2C_LEAVEROOM, sub.Value.(GpManager.SocketInfo).User, LeaveSocket.SocketId, "") // Publish a LEAVE event.
 					//Gthis.MsgList <- Gthis.NewMsg(GpPacket.IM_EVENT_BROADCAST_LEAVE, sub.Value.(SocketInfo).User, LeaveSocket.SocketId, "")
 					break
 				}
@@ -91,12 +94,13 @@ func GameStart(event GpPacket.IM_protocol, Gthis *GpManager.WebSocketListControl
 	}
 
 }
-func GetRoomList(Gpthis *GpManager.WebSocketListController) {
+func GetRoomList(msg GpPacket.IM_protocol, Gpthis *GpManager.WebSocketListController) {
 	ret := GpGame.GetRoomList()
 	event := GpPacket.Protocol_getroomlist{}
-	event.Type = GpPacket.IM_S2C_ROOMLIST
+	event.Type = GpPacket.IM_S2C_SENDROOMLIST
 	event.List = ret
-	data, err := json.Marshal(event)
+	event.SocketId = event.SocketId
+	data, err := json.Marshal(msg)
 	if err != nil {
 		Global.Logger.Error("Fail to marshal event:", err)
 		return

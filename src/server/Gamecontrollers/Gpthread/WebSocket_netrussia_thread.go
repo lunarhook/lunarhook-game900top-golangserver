@@ -13,6 +13,7 @@ func NetRussia(Gthis *GpManager.WebSocketListController) {
 		time.Sleep(400 * time.Millisecond)
 		event := GpPacket.IM_protocol{}
 		event.Type = GpPacket.IM_EVENT_BROADCAST_MESSAGE
+
 		ret, b := GpGame.Start(event)
 		if true == b {
 			BCGame(ret, Gthis)
