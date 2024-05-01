@@ -42,9 +42,15 @@ type IM_protocol struct {
 	Timestamp     int // Unix timestamp (secs)
 	Roomid        uint32
 }
-type IM_msg struct {
-	Type  EventType // JOIN, LEAVE, MESSAGE
-	Bytes []byte
+type IM_rec struct {
+	Type     EventType // JOIN, LEAVE, MESSAGE
+	SocketId uint32
+	Msg      string
+}
+type IM_ret struct {
+	Type     EventType // JOIN, LEAVE, MESSAGE
+	SocketId uint32
+	Msg      string
 }
 
 const archiveSize = 100
@@ -53,7 +59,7 @@ const archiveSize = 100
 var archive = list.New()
 
 // NewArchive saves new event to archive list.
-func NewArchive(event IM_protocol) {
+func NewArchive(event IM_rec) {
 	if archive.Len() >= archiveSize {
 		archive.Remove(archive.Front())
 	}
@@ -61,13 +67,15 @@ func NewArchive(event IM_protocol) {
 }
 
 // GetEvents returns all events after lastReceived.
-func GetEvents(lastReceived int) []IM_protocol {
-	events := make([]IM_protocol, 0, archive.Len())
+/*
+func GetEvents(lastReceived int) []IM_rec {
+	events := make([]IM_rec, 0, archive.Len())
 	for event := archive.Front(); event != nil; event = event.Next() {
-		e := event.Value.(IM_protocol)
+		e := event.Value.(IM_rec)
 		if e.Timestamp > int(lastReceived) {
 			events = append(events, e)
 		}
 	}
 	return events
 }
+*/

@@ -10,7 +10,7 @@ import (
 // 带用户信息的websocket
 type SocketInfo struct {
 	SocketId uint32
-	User     GpPacket.IM_protocol
+	User     GpPacket.IM_rec
 	Conn     *websocket.Conn
 }
 type SocketId struct {
@@ -25,7 +25,7 @@ type WebSocketListController struct {
 	// Channel for exit users.
 	UnSocketChan chan UnSocketId
 	// Send events here to publish them.
-	MsgList chan (GpPacket.IM_protocol)
+	MsgList chan (GpPacket.IM_rec)
 	// Long polling waiting list.
 	ActiveSocketList *list.List
 	beego.Controller

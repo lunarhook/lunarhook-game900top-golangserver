@@ -25,7 +25,7 @@ func (this *WebSocketStruct) SocketJoin(SocketId uint32, ws *websocket.Conn, Gpt
 		NewSocketId := r.Uint32()
 		if !Gpthis.IsExistSocketById(NewSocketId) {
 			//这里就是整个用户存在的循环体积，先将用户放入订阅队列
-			Gpthis.SocketChan <- GpManager.SocketInfo{NewSocketId, GpPacket.IM_protocol{}, ws}
+			Gpthis.SocketChan <- GpManager.SocketInfo{NewSocketId, GpPacket.IM_rec{}, ws}
 			//预定函数结尾让用户离开， 因为有可能强行kick，所以有单独函数
 			defer this.SocketLeave(NewSocketId, Gpthis)
 			//停止NewSocketId获取
@@ -38,10 +38,10 @@ func (this *WebSocketStruct) SocketJoin(SocketId uint32, ws *websocket.Conn, Gpt
 		if err != nil {
 			return
 		}
-		var info GpPacket.IM_protocol
+		var info GpPacket.IM_rec
 		if err := json.Unmarshal([]byte(p), &info); err == nil {
-			Gpthis.MsgList <- this.NewMsg(Gpthis, info.Type, info, info.SocketId, info.Msg)
-			//Gpthis.MsgList <- this.NewByte(Gpthis, info.Type, p)
+			//Gpthis.MsgList <- this.NewMsg(Gpthis, info.Type, info, info.SocketId, info.Msg)
+			Gpthis.MsgList <- this.NewByte(Gpthis, info.Type, info.SocketId, info.Msg)
 		} else {
 			Global.Logger.Error("Join", err)
 		}
