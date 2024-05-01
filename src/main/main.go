@@ -19,9 +19,10 @@ func main() {
 	time.Sleep(2 * time.Second)
 	Gamecontrollers.Init()
 	IGphandle.Init()
-	// WebSocket.
+	// WebSocket.ssl
 	beego.Router("/wss", IGphandle.GHandlemanager)
 	beego.Router("/wss/socket", IGphandle.GHandlemanager, "get:Api_socket")
+	// WebSocket
 	beego.Router("/ws", IGphandle.GHandlemanager)
 	beego.Router("/ws/socket", IGphandle.GHandlemanager, "get:Api_socket")
 	beego.Run()
