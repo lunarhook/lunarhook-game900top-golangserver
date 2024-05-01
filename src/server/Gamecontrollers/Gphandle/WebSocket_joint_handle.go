@@ -41,6 +41,7 @@ func (this *WebSocketStruct) SocketJoin(SocketId uint32, ws *websocket.Conn, Gpt
 		var info GpPacket.IM_protocol
 		if err := json.Unmarshal([]byte(p), &info); err == nil {
 			Gpthis.MsgList <- this.NewMsg(Gpthis, info.Type, info, info.SocketId, info.Msg)
+			//Gpthis.MsgList <- this.NewByte(Gpthis, info.Type, p)
 		} else {
 			Global.Logger.Error("Join", err)
 		}

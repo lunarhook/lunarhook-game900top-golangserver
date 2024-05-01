@@ -42,6 +42,10 @@ type IM_protocol struct {
 	Timestamp     int // Unix timestamp (secs)
 	Roomid        uint32
 }
+type IM_msg struct {
+	Type  EventType // JOIN, LEAVE, MESSAGE
+	Bytes []byte
+}
 
 const archiveSize = 100
 
