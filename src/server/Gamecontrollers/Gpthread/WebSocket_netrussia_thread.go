@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func NetRussia(Gthis *GpManager.WebSocketListController) {
+func NetRussia(Gpthis *GpManager.WebSocketListController) {
 	for {
 		time.Sleep(400 * time.Millisecond)
 		event := GpPacket.IM_protocol{}
@@ -16,10 +16,10 @@ func NetRussia(Gthis *GpManager.WebSocketListController) {
 
 		ret, b := GpGame.Start(event)
 		if true == b {
-			BCGame(ret, Gthis)
+			BCGame(ret, Gpthis)
 		}
 	}
 }
-func BCGame(event GpPacket.IM_protocol, Gthis *GpManager.WebSocketListController) {
-	Gphandle.GWebSocketStruct.BroadcastWebSocket(event, Gthis)
+func BCGame(event GpPacket.IM_protocol, Gpthis *GpManager.WebSocketListController) {
+	Gphandle.GWebSocketStruct.BroadcastWebSocket(event, Gpthis)
 }

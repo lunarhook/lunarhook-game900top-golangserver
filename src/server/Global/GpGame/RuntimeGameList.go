@@ -1,5 +1,10 @@
 package GpGame
 
+import (
+	"encoding/json"
+	"github.com/lunarhook/lunarhook-game900top-golangserver/src/server/Global"
+)
+
 type GameTopRoom struct {
 	id       int      `json:"id"`
 	wordlist []string `json:"wordlist"`
@@ -42,15 +47,23 @@ func BuildServerRoom() {
 
 }
 
-func GetRoomList() []int {
+func GetRoomList() string {
 	lens := len(*gGameTop)
-	reslist := []int{}
+	type reslist struct {
+		List []int
+	}
+	rlist := reslist{}
 	for i := 0; i < lens; i++ {
 		if false == (*gGameTop)[i].runplay || true == (*gGameTop)[i].onwait {
-			reslist = append(reslist, (*gGameTop)[i].id)
+			rlist.List = append(rlist.List, (*gGameTop)[i].id)
 		}
 	}
-	return reslist
+	data, err := json.Marshal(rlist)
+	if err != nil {
+		Global.Logger.Error("GetRoomList:", err)
+		return ""
+	}
+	return string(data)
 }
 
 func JoinCreatRoomById(id int) string {

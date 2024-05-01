@@ -9,6 +9,7 @@ import (
 )
 
 func (this *WebSocketStruct) HeartWebSocket(event GpPacket.IM_protocol, Gpthis *GpManager.WebSocketListController) {
+	event.Type = GpPacket.IM_C2S2C_HEART
 	data, err := json.Marshal(event)
 	if err != nil {
 		Global.Logger.Error("Fail to marshal event:", err)

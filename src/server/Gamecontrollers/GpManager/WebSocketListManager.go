@@ -10,7 +10,7 @@ import (
 // 带用户信息的websocket
 type SocketInfo struct {
 	SocketId uint32
-	User     GpPacket.IM_protocol_user
+	User     GpPacket.IM_protocol
 	Conn     *websocket.Conn
 }
 type SocketId struct {

@@ -7,7 +7,8 @@ import (
 type EventType int
 
 const (
-	IM_S2C_JOIN = iota
+	IM_C2S_JOIN = iota
+	IM_S2C_JOIN
 	IM_C2S_GETROOMLIST
 	IM_S2C_SENDROOMLIST
 	IM_C2S_JOINCREATROOM
@@ -17,6 +18,7 @@ const (
 	IM_S2C_SENDQUEST
 	IM_C2S_SENDANSWER
 	IM_S2C_SENDANSWER
+	IM_C2S_LEAVEROOM
 	IM_S2C_LEAVEROOM
 	IM_C2S2C_HEART
 	IM_EVENT_BROADCAST_HEART
@@ -26,26 +28,19 @@ const (
 
 // 用户描述信息
 type IM_protocol_user struct {
-	To         uint32
-	From       uint32
-	SessKey    uint32
-	ChatChanId uint32
+	avatarUrlA string
+	avatarUrlB string
 }
 
 // 用户交互协议
 type IM_protocol struct {
-	Type      EventType // JOIN, LEAVE, MESSAGE
-	Msg       string
-	SocketId  uint32
-	Users     IM_protocol_user
-	Timestamp int // Unix timestamp (secs)
-}
-
-type Protocol_getroomlist struct {
-	Type      EventType // JOIN, LEAVE, MESSAGE
-	List      []int
-	SocketId  uint32
-	Timestamp int // Unix timestamp (secs)
+	Type          EventType // JOIN, LEAVE, MESSAGE
+	Msg           string
+	SocketId      uint32
+	SocketIdother uint32
+	Users         IM_protocol_user
+	Timestamp     int // Unix timestamp (secs)
+	Roomid        uint32
 }
 
 const archiveSize = 100
