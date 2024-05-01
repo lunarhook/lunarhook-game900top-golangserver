@@ -26,22 +26,7 @@ const (
 	IM_EVENT_MESSAGE
 )
 
-// 用户描述信息
-type IM_protocol_user struct {
-	avatarUrlA string
-	avatarUrlB string
-}
-
 // 用户交互协议
-type IM_protocol struct {
-	Type          EventType // JOIN, LEAVE, MESSAGE
-	Msg           string
-	SocketId      uint32
-	SocketIdother uint32
-	Users         IM_protocol_user
-	Timestamp     int // Unix timestamp (secs)
-	Roomid        uint32
-}
 type IM_rec struct {
 	Type     EventType // JOIN, LEAVE, MESSAGE
 	SocketId uint32

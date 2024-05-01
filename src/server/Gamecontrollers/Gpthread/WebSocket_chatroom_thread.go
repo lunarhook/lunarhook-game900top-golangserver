@@ -90,16 +90,6 @@ func Chatroom(Gpthis *GpManager.WebSocketListController) {
 	}
 }
 
-func GameStart(event GpPacket.IM_protocol, Gpthis *GpManager.WebSocketListController) {
-	if "" == event.Msg {
-		return
-	}
-	_, t := GpGame.Start(event)
-	if true == t {
-		//BCGame(ret, Gpthis)
-	}
-
-}
 func SelectRoom(msg GpPacket.IM_rec, Gpthis *GpManager.WebSocketListController) {
 	event := GpPacket.IM_ret{}
 	event.Type = GpPacket.IM_S2C_JOINCREATROOM

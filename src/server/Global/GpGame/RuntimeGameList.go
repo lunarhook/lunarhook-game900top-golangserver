@@ -25,9 +25,6 @@ func GameTopRoom_tick() {
 
 		}
 	}
-	ClearUnderBlock()
-	MsgReturn()
-	gameover()
 }
 func BuildServerRoom() {
 	var GameTopRoomList = (make([]GameTopRoom, 3))
