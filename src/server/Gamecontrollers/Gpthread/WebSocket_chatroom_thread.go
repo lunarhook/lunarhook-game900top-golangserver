@@ -65,6 +65,11 @@ func Chatroom(Gpthis *GpManager.WebSocketListController) {
 				Gphandle.GWebSocketStruct.BroadcastWebSocket(SocketMessage, GpManager.GlobaWebSocketListManager)
 				GetRoomList(SocketMessage, Gpthis)
 				break
+			case
+				GpPacket.IM_C2S_TESTBEGINGAME,
+				GpPacket.IM_S2C_BEGINQUEST:
+				BeginRoomGame(SocketMessage, Gpthis)
+				break
 			default:
 				Gphandle.GWebSocketStruct.HeartWebSocket(SocketMessage, GpManager.GlobaWebSocketListManager)
 				break
@@ -116,14 +121,15 @@ func SelectRoom(msg GpPacket.IM_rec, Gpthis *GpManager.WebSocketListController) 
 		return
 	}
 	for sub := Gpthis.ActiveSocketList.Front(); sub != nil; sub = sub.Next() {
-		ws := sub.Value.(GpManager.SocketInfo).Conn
-		if ws != nil {
-			if ws.WriteMessage(websocket.TextMessage, data) != nil {
-				Global.Logger.Trace("disconnected user:", sub.Value.(GpManager.SocketInfo).User)
-				// User disconnected.
-				Gpthis.UnSocketChan <- GpManager.UnSocketId{sub.Value.(GpManager.SocketInfo).SocketId}
+		if sub.Value.(GpManager.SocketInfo).SocketId == event.SocketId {
+			ws := sub.Value.(GpManager.SocketInfo).Conn
+			if ws != nil {
+				if ws.WriteMessage(websocket.TextMessage, data) != nil {
+					Global.Logger.Trace("disconnected user:", sub.Value.(GpManager.SocketInfo).User)
+					// User disconnected.
+					Gpthis.UnSocketChan <- GpManager.UnSocketId{sub.Value.(GpManager.SocketInfo).SocketId}
+				}
 			}
-
 		}
 	}
 }
@@ -138,14 +144,15 @@ func joinroom(msg GpPacket.IM_rec, Gpthis *GpManager.WebSocketListController) {
 		return
 	}
 	for sub := Gpthis.ActiveSocketList.Front(); sub != nil; sub = sub.Next() {
-		ws := sub.Value.(GpManager.SocketInfo).Conn
-		if ws != nil {
-			if ws.WriteMessage(websocket.TextMessage, data) != nil {
-				Global.Logger.Trace("disconnected user:", sub.Value.(GpManager.SocketInfo).User)
-				// User disconnected.
-				Gpthis.UnSocketChan <- GpManager.UnSocketId{sub.Value.(GpManager.SocketInfo).SocketId}
+		if sub.Value.(GpManager.SocketInfo).SocketId == event.SocketId {
+			ws := sub.Value.(GpManager.SocketInfo).Conn
+			if ws != nil {
+				if ws.WriteMessage(websocket.TextMessage, data) != nil {
+					Global.Logger.Trace("disconnected user:", sub.Value.(GpManager.SocketInfo).User)
+					// User disconnected.
+					Gpthis.UnSocketChan <- GpManager.UnSocketId{sub.Value.(GpManager.SocketInfo).SocketId}
+				}
 			}
-
 		}
 	}
 }
@@ -161,13 +168,15 @@ func LeaveRoom(msg GpPacket.IM_rec, Gpthis *GpManager.WebSocketListController) {
 		return
 	}
 	for sub := Gpthis.ActiveSocketList.Front(); sub != nil; sub = sub.Next() {
-		ws := sub.Value.(GpManager.SocketInfo).Conn
-		if ws != nil {
-			if ws.WriteMessage(websocket.TextMessage, data) != nil {
-				Global.Logger.Trace("disconnected user:", sub.Value.(GpManager.SocketInfo).User)
+		if sub.Value.(GpManager.SocketInfo).SocketId == event.SocketId {
+			ws := sub.Value.(GpManager.SocketInfo).Conn
+			if ws != nil {
+				if ws.WriteMessage(websocket.TextMessage, data) != nil {
+					Global.Logger.Trace("disconnected user:", sub.Value.(GpManager.SocketInfo).User)
+				}
+				// User disconnected.
+				Gpthis.UnSocketChan <- GpManager.UnSocketId{sub.Value.(GpManager.SocketInfo).SocketId}
 			}
-			// User disconnected.
-			Gpthis.UnSocketChan <- GpManager.UnSocketId{sub.Value.(GpManager.SocketInfo).SocketId}
 		}
 	}
 }
@@ -183,15 +192,39 @@ func GetRoomList(msg GpPacket.IM_rec, Gpthis *GpManager.WebSocketListController)
 		return
 	}
 	for sub := Gpthis.ActiveSocketList.Front(); sub != nil; sub = sub.Next() {
-		// Immediately send event to WebSocket users.
-		ws := sub.Value.(GpManager.SocketInfo).Conn
-		if ws != nil {
+		if sub.Value.(GpManager.SocketInfo).SocketId == event.SocketId {
+			ws := sub.Value.(GpManager.SocketInfo).Conn
+			if ws != nil {
 
-			if ws.WriteMessage(websocket.TextMessage, data) != nil {
-				// User disconnected.
-				Global.Logger.Trace("disconnected user:", sub.Value.(GpManager.SocketInfo).User)
-				Gpthis.UnSocketChan <- GpManager.UnSocketId{sub.Value.(GpManager.SocketInfo).SocketId}
+				if ws.WriteMessage(websocket.TextMessage, data) != nil {
+					// User disconnected.
+					Global.Logger.Trace("disconnected user:", sub.Value.(GpManager.SocketInfo).User)
+					Gpthis.UnSocketChan <- GpManager.UnSocketId{sub.Value.(GpManager.SocketInfo).SocketId}
 
+				}
+			}
+		}
+	}
+}
+func BeginRoomGame(msg GpPacket.IM_rec, Gpthis *GpManager.WebSocketListController) {
+	event := GpPacket.IM_rec{}
+	event.Type = GpPacket.IM_S2C_BEGINQUEST
+	event.SocketId = msg.SocketId
+	event.Msg = string(msg.Msg)
+	data, err := json.Marshal(event)
+	if err != nil {
+		Global.Logger.Error("Fail to marshal event:", err)
+		return
+	}
+	for sub := Gpthis.ActiveSocketList.Front(); sub != nil; sub = sub.Next() {
+		if sub.Value.(GpManager.SocketInfo).SocketId == event.SocketId {
+			ws := sub.Value.(GpManager.SocketInfo).Conn
+			if ws != nil {
+				if ws.WriteMessage(websocket.TextMessage, data) != nil {
+					// User disconnected.
+					Global.Logger.Trace("disconnected user:", sub.Value.(GpManager.SocketInfo).User)
+					Gpthis.UnSocketChan <- GpManager.UnSocketId{sub.Value.(GpManager.SocketInfo).SocketId}
+				}
 			}
 		}
 	}

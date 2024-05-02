@@ -2,7 +2,11 @@ package GpGame
 
 import (
 	"encoding/json"
+	GpPacket "github.com/lunarhook/lunarhook-game900top-golangserver/src/server"
+	"github.com/lunarhook/lunarhook-game900top-golangserver/src/server/Gamecontrollers/GpManager"
+	"github.com/lunarhook/lunarhook-game900top-golangserver/src/server/Gamecontrollers/Gphandle"
 	"github.com/lunarhook/lunarhook-game900top-golangserver/src/server/Global"
+	"time"
 )
 
 type GameTopRoom struct {
@@ -17,15 +21,34 @@ type GameTopRoom struct {
 	Runplay     bool
 }
 
+type BeginGameRoom struct {
+	Id        uint64 `json:"Id"`
+	SocketIdA uint32 `json:"SocketIdA"`
+	SocketIdB uint32 `json:"SocketIdB"`
+}
+
 var gGameTop *([]GameTopRoom)
 
 func GameTopRoom_tick() {
-	lens := len(*gGameTop)
-	for i := 0; i < lens; i++ {
-		if true == (*gGameTop)[i].Runplay {
 
+	for {
+		time.Sleep(10 * time.Second)
+		lens := len(*gGameTop)
+		for i := 0; i < lens; i++ {
+			if false == (*gGameTop)[i].Runplay {
+				if 0 != (*gGameTop)[i].SocketIdA && (*gGameTop)[i].SocketIdB == 0 {
+					Gpthis := GpManager.GlobaWebSocketListManager
+					o := BeginGameRoom{}
+					o.Id = (*gGameTop)[i].Id
+					o.SocketIdA = (*gGameTop)[i].SocketIdA
+					o.SocketIdB = (*gGameTop)[i].SocketIdA
+					data, _ := json.Marshal(o)
+					Gpthis.MsgList <- Gphandle.GWebSocketStruct.NewByte(Gpthis, GpPacket.IM_C2S_TESTBEGINGAME, (*gGameTop)[i].SocketIdA, string(data))
+				}
+			}
 		}
 	}
+
 }
 func BuildServerRoom(size uint) {
 	var GameTopRoomList = (make([]GameTopRoom, size))

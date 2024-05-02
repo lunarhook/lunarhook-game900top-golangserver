@@ -23,4 +23,5 @@ func Init() {
 	GpGame.BuildServerRoom(5)
 
 	go Gpthread.Chatroom(GpManager.GlobaWebSocketListManager)
+	go GpGame.GameTopRoom_tick()
 }
