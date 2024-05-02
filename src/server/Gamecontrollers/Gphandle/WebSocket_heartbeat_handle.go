@@ -9,7 +9,7 @@ import (
 )
 
 func (this *WebSocketStruct) HeartWebSocket(msg GpPacket.IM_rec, Gpthis *GpManager.WebSocketListController) {
-	event := GpPacket.IM_ret{}
+	event := GpPacket.IM_rec{}
 	event.Type = GpPacket.IM_C2S2C_HEART
 	event.SocketId = msg.SocketId
 	event.Msg = string(msg.Msg)

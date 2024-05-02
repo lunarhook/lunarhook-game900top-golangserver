@@ -1,8 +1,6 @@
 package GpPacket
 
-import (
-	"container/list"
-)
+import "container/list"
 
 type EventType int
 
@@ -28,14 +26,9 @@ const (
 
 // 用户交互协议
 type IM_rec struct {
-	Type     EventType // JOIN, LEAVE, MESSAGE
-	SocketId uint32
-	Msg      string
-}
-type IM_ret struct {
-	Type     EventType // JOIN, LEAVE, MESSAGE
-	SocketId uint32
-	Msg      string
+	Type     EventType `json:"Type"`
+	SocketId uint32    `json:"SocketId"`
+	Msg      string    `json:"Msg"`
 }
 
 const archiveSize = 100

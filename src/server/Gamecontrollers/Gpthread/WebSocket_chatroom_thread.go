@@ -8,6 +8,7 @@ import (
 	"github.com/lunarhook/lunarhook-game900top-golangserver/src/server/Gamecontrollers/Gphandle"
 	Global "github.com/lunarhook/lunarhook-game900top-golangserver/src/server/Global"
 	"github.com/lunarhook/lunarhook-game900top-golangserver/src/server/Global/GpGame"
+	"github.com/tidwall/gjson"
 )
 
 func Chatroom(Gpthis *GpManager.WebSocketListController) {
@@ -30,6 +31,7 @@ func Chatroom(Gpthis *GpManager.WebSocketListController) {
 			case
 				GpPacket.IM_C2S2C_HEART: // 心跳
 				Gphandle.GWebSocketStruct.HeartWebSocket(SocketMessage, Gpthis)
+
 				break
 			case
 				GpPacket.IM_C2S_LEAVEROOM,
@@ -44,6 +46,7 @@ func Chatroom(Gpthis *GpManager.WebSocketListController) {
 			case
 				GpPacket.IM_C2S_JOINCREATROOM:
 				SelectRoom(SocketMessage, Gpthis)
+				GetRoomList(SocketMessage, Gpthis)
 				break
 			case
 				GpPacket.IM_S2C_JOINCREATROOM: //创建房间等待对手加入
@@ -57,8 +60,10 @@ func Chatroom(Gpthis *GpManager.WebSocketListController) {
 				Gphandle.GWebSocketStruct.BroadcastWebSocket(SocketMessage, GpManager.GlobaWebSocketListManager)
 				break
 			case
+				//广播所有消息事件
 				GpPacket.IM_EVENT_BROADCAST_MESSAGE:
 				Gphandle.GWebSocketStruct.BroadcastWebSocket(SocketMessage, GpManager.GlobaWebSocketListManager)
+				GetRoomList(SocketMessage, Gpthis)
 				break
 			default:
 				Gphandle.GWebSocketStruct.HeartWebSocket(SocketMessage, GpManager.GlobaWebSocketListManager)
@@ -91,11 +96,21 @@ func Chatroom(Gpthis *GpManager.WebSocketListController) {
 }
 
 func SelectRoom(msg GpPacket.IM_rec, Gpthis *GpManager.WebSocketListController) {
-	event := GpPacket.IM_ret{}
+	event := GpPacket.IM_rec{}
 	event.Type = GpPacket.IM_S2C_JOINCREATROOM
 	event.SocketId = msg.SocketId
-	event.Msg = string(msg.Msg)
+	RoomId := gjson.Get(msg.Msg, "Msg.roomid")
+	pRoom := GpGame.JoinCreatRoomById(RoomId.Uint(), msg.SocketId)
+	if nil != pRoom {
+		r := &(*pRoom)
+		r.SocketIdA = msg.SocketId
+		avatar := gjson.Get(msg.Msg, "Msg.avatarUrl")
+		r.PlayAavatar = avatar.String()
+	} else {
+		event.Msg = string("IM_S2C_JOINCREATROOM failed")
+	}
 	data, err := json.Marshal(event)
+	//JoinCreatRoomById
 	if err != nil {
 		Global.Logger.Error("Fail to marshal event:", err)
 		return
@@ -113,7 +128,7 @@ func SelectRoom(msg GpPacket.IM_rec, Gpthis *GpManager.WebSocketListController) 
 	}
 }
 func joinroom(msg GpPacket.IM_rec, Gpthis *GpManager.WebSocketListController) {
-	event := GpPacket.IM_ret{}
+	event := GpPacket.IM_rec{}
 	event.Type = GpPacket.IM_S2C_JOIN
 	event.SocketId = msg.SocketId
 	event.Msg = string(msg.Msg)
@@ -135,10 +150,11 @@ func joinroom(msg GpPacket.IM_rec, Gpthis *GpManager.WebSocketListController) {
 	}
 }
 func LeaveRoom(msg GpPacket.IM_rec, Gpthis *GpManager.WebSocketListController) {
-	event := GpPacket.IM_ret{}
+	event := GpPacket.IM_rec{}
 	event.Type = GpPacket.IM_S2C_LEAVEROOM
 	event.SocketId = msg.SocketId
 	event.Msg = string(msg.Msg)
+	GpGame.LeaveRoomBySocketId(msg.SocketId)
 	data, err := json.Marshal(event)
 	if err != nil {
 		Global.Logger.Error("Fail to marshal event:", err)
@@ -157,7 +173,7 @@ func LeaveRoom(msg GpPacket.IM_rec, Gpthis *GpManager.WebSocketListController) {
 }
 func GetRoomList(msg GpPacket.IM_rec, Gpthis *GpManager.WebSocketListController) {
 	ret := GpGame.GetRoomList()
-	event := GpPacket.IM_ret{}
+	event := GpPacket.IM_rec{}
 	event.Type = GpPacket.IM_S2C_SENDROOMLIST
 	event.Msg = ret
 	event.SocketId = msg.SocketId

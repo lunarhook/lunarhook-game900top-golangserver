@@ -20,7 +20,7 @@ func Init() {
 
 	GpManager.GlobaWebSocketListManager.ActiveSocketList = list.New()
 
-	GpGame.BuildServerRoom()
+	GpGame.BuildServerRoom(5)
 
 	go Gpthread.Chatroom(GpManager.GlobaWebSocketListManager)
 }

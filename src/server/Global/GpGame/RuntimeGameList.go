@@ -6,14 +6,15 @@ import (
 )
 
 type GameTopRoom struct {
-	id       int      `json:"id"`
-	wordlist []string `json:"wordlist"`
-	playa    []string `json:"playa"`
-	playb    []string `json:"playb"`
-	scorceA  int      `json:"scorceA"`
-	scorceB  int      `json:"scorceB"`
-	onwait   bool
-	runplay  bool
+	Id          uint64   `json:"Id"`
+	Wordlist    []string `json:"Wordlist"`
+	SocketIdA   uint32   `json:"SocketIdA"`
+	SocketIdB   uint32   `json:"SocketIdB"`
+	PlayAavatar string   `json:"PlayAavatar"`
+	PlayBavatar string   `json:"PlayBavatar"`
+	ScorceA     uint64   `json:"ScorceA"`
+	ScorceB     uint64   `json:"ScorceB"`
+	Runplay     bool
 }
 
 var gGameTop *([]GameTopRoom)
@@ -21,23 +22,22 @@ var gGameTop *([]GameTopRoom)
 func GameTopRoom_tick() {
 	lens := len(*gGameTop)
 	for i := 0; i < lens; i++ {
-		if true == (*gGameTop)[i].runplay {
+		if true == (*gGameTop)[i].Runplay {
 
 		}
 	}
 }
-func BuildServerRoom() {
-	var GameTopRoomList = (make([]GameTopRoom, 3))
+func BuildServerRoom(size uint) {
+	var GameTopRoomList = (make([]GameTopRoom, size))
 	gGameTop = &GameTopRoomList
 	lens := len(*gGameTop)
-	var Roomid = 10000
+	var Roomid = uint64(10000)
 	for i := 0; i < lens; i++ {
-		if false == (*gGameTop)[i].runplay {
-			(*gGameTop)[i].id = Roomid
-			(*gGameTop)[i].scorceA = 0
-			(*gGameTop)[i].scorceB = 0
-			(*gGameTop)[i].runplay = false
-			(*gGameTop)[i].onwait = false
+		if false == (*gGameTop)[i].Runplay {
+			(*gGameTop)[i].Id = Roomid
+			(*gGameTop)[i].ScorceA = 0
+			(*gGameTop)[i].ScorceB = 0
+			(*gGameTop)[i].Runplay = false
 			Roomid++
 		}
 	}
@@ -47,12 +47,22 @@ func BuildServerRoom() {
 func GetRoomList() string {
 	lens := len(*gGameTop)
 	type reslist struct {
-		List []int
+		RoomId   uint64 `json:"RoomId"`
+		Battle   bool   `json:"Battle"`
+		SocketId uint32 `json:"SocketId"`
 	}
-	rlist := reslist{}
+	rlist := []reslist{}
 	for i := 0; i < lens; i++ {
-		if false == (*gGameTop)[i].runplay || true == (*gGameTop)[i].onwait {
-			rlist.List = append(rlist.List, (*gGameTop)[i].id)
+		if false == (*gGameTop)[i].Runplay {
+			index := reslist{}
+			index.RoomId = (*gGameTop)[i].Id
+			index.Battle = ((0 != (*gGameTop)[i].SocketIdA) || (0 != (*gGameTop)[i].SocketIdB))
+			if 0 != (*gGameTop)[i].SocketIdA {
+				index.SocketId = (*gGameTop)[i].SocketIdA
+			} else {
+				index.SocketId = (*gGameTop)[i].SocketIdB
+			}
+			rlist = append(rlist, index)
 		}
 	}
 	data, err := json.Marshal(rlist)
@@ -62,16 +72,28 @@ func GetRoomList() string {
 	}
 	return string(data)
 }
-
-func JoinCreatRoomById(id int) string {
+func LeaveRoomBySocketId(SocketId uint32) {
 	lens := len(*gGameTop)
 	for i := 0; i < lens; i++ {
-		if false == (*gGameTop)[i].runplay || id == (*gGameTop)[i].id || true == (*gGameTop)[i].onwait {
-			return "JOIN"
+		if SocketId == (*gGameTop)[i].SocketIdA {
+			(*gGameTop)[i].SocketIdA = 0
 		}
-		if false == (*gGameTop)[i].runplay || id == (*gGameTop)[i].id || false == (*gGameTop)[i].onwait {
-			return "CREATE"
+		if SocketId == (*gGameTop)[i].SocketIdB {
+			(*gGameTop)[i].SocketIdB = 0
 		}
 	}
-	return ""
+}
+func JoinCreatRoomById(id uint64, mysock uint32) *GameTopRoom {
+	lens := len(*gGameTop)
+	for i := 0; i < lens; i++ {
+		if (*gGameTop)[i].SocketIdA == mysock || (*gGameTop)[i].SocketIdB == mysock {
+			return nil
+		}
+	}
+	for i := 0; i < lens; i++ {
+		if false == (*gGameTop)[i].Runplay && id == (*gGameTop)[i].Id {
+			return &(*gGameTop)[i]
+		}
+	}
+	return nil
 }
