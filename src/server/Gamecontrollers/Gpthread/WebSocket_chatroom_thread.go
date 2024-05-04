@@ -70,6 +70,10 @@ func Chatroom(Gpthis *GpManager.WebSocketListController) {
 				GpPacket.IM_S2C_BEGINQUEST:
 				BeginRoomGame(SocketMessage, Gpthis)
 				break
+			case
+				GpPacket.IM_C2S_SENDQUEST:
+				RoomGameRun(SocketMessage, Gpthis)
+				break
 			default:
 				Gphandle.GWebSocketStruct.HeartWebSocket(SocketMessage, GpManager.GlobaWebSocketListManager)
 				break
@@ -205,6 +209,9 @@ func GetRoomList(msg GpPacket.IM_rec, Gpthis *GpManager.WebSocketListController)
 			}
 		}
 	}
+}
+func RoomGameRun(msg GpPacket.IM_rec, Gpthis *GpManager.WebSocketListController) {
+	GpGame.ActiveRoom(msg.SocketId)
 }
 func BeginRoomGame(msg GpPacket.IM_rec, Gpthis *GpManager.WebSocketListController) {
 	event := GpPacket.IM_rec{}

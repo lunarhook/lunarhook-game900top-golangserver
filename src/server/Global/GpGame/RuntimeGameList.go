@@ -18,6 +18,7 @@ type GameTopRoom struct {
 	PlayBavatar string   `json:"PlayBavatar"`
 	ScorceA     uint64   `json:"ScorceA"`
 	ScorceB     uint64   `json:"ScorceB"`
+	TimeOut     uint32   `json:"TimeOut"`
 	Runplay     bool
 }
 
@@ -36,6 +37,7 @@ func GameTopRoom_tick() {
 		lens := len(*gGameTop)
 		for i := 0; i < lens; i++ {
 			if false == (*gGameTop)[i].Runplay {
+				//for test
 				if 0 != (*gGameTop)[i].SocketIdA && (*gGameTop)[i].SocketIdB == 0 {
 					Gpthis := GpManager.GlobaWebSocketListManager
 					o := BeginGameRoom{}
@@ -45,10 +47,31 @@ func GameTopRoom_tick() {
 					data, _ := json.Marshal(o)
 					Gpthis.MsgList <- Gphandle.GWebSocketStruct.NewByte(Gpthis, GpPacket.IM_C2S_TESTBEGINGAME, (*gGameTop)[i].SocketIdA, string(data))
 				}
+			} else {
+				pGameRoom := &((*gGameTop)[i])
+				pGameRoom.TimeOut = pGameRoom.TimeOut - 10
+				if pGameRoom.TimeOut <= 0 {
+					Gpthis := GpManager.GlobaWebSocketListManager
+					Gpthis.MsgList <- Gphandle.GWebSocketStruct.NewByte(Gpthis, GpPacket.IM_C2S_GETROOMLIST, (*gGameTop)[i].SocketIdA, string(""))
+					Gpthis.MsgList <- Gphandle.GWebSocketStruct.NewByte(Gpthis, GpPacket.IM_C2S_GETROOMLIST, (*gGameTop)[i].SocketIdA, string(""))
+					Clearroom(pGameRoom)
+				}
+				Global.Logger.Info("S2S: GameTopRoom_tick =", pGameRoom.Id)
 			}
 		}
 	}
 
+}
+func Clearroom(pGroom *GameTopRoom) {
+	pGroom.TimeOut = 0
+	pGroom.Runplay = false
+	pGroom.SocketIdA = 0
+	pGroom.SocketIdB = 0
+	pGroom.ScorceA = 0
+	pGroom.ScorceB = 0
+	pGroom.Wordlist = []string{}
+	pGroom.PlayAavatar = ""
+	pGroom.PlayBavatar = ""
 }
 func BuildServerRoom(size uint) {
 	var GameTopRoomList = (make([]GameTopRoom, size))
@@ -66,7 +89,19 @@ func BuildServerRoom(size uint) {
 	}
 
 }
-
+func ActiveRoom(SocketId uint32) {
+	lens := len(*gGameTop)
+	for i := 0; i < lens; i++ {
+		if SocketId == (*gGameTop)[i].SocketIdA {
+			(*gGameTop)[i].Runplay = true
+			(*gGameTop)[i].TimeOut = 50
+		}
+		if SocketId == (*gGameTop)[i].SocketIdB {
+			(*gGameTop)[i].Runplay = true
+			(*gGameTop)[i].TimeOut = 50
+		}
+	}
+}
 func GetRoomList() string {
 	lens := len(*gGameTop)
 	type reslist struct {
