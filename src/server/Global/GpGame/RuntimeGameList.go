@@ -6,19 +6,20 @@ import (
 	"github.com/lunarhook/lunarhook-game900top-golangserver/src/server/Gamecontrollers/GpManager"
 	"github.com/lunarhook/lunarhook-game900top-golangserver/src/server/Gamecontrollers/Gphandle"
 	"github.com/lunarhook/lunarhook-game900top-golangserver/src/server/Global"
+	"github.com/tidwall/gjson"
 	"time"
 )
 
 type GameTopRoom struct {
-	Id          uint64   `json:"Id"`
-	Wordlist    []string `json:"Wordlist"`
-	SocketIdA   uint32   `json:"SocketIdA"`
-	SocketIdB   uint32   `json:"SocketIdB"`
-	PlayAavatar string   `json:"PlayAavatar"`
-	PlayBavatar string   `json:"PlayBavatar"`
-	ScorceA     uint64   `json:"ScorceA"`
-	ScorceB     uint64   `json:"ScorceB"`
-	TimeOut     uint32   `json:"TimeOut"`
+	Id          uint64    `json:"Id"`
+	Wordlist    [5]string `json:"Wordlist"`
+	SocketIdA   uint32    `json:"SocketIdA"`
+	SocketIdB   uint32    `json:"SocketIdB"`
+	PlayAavatar string    `json:"PlayAavatar"`
+	PlayBavatar string    `json:"PlayBavatar"`
+	ScorceA     uint64    `json:"ScorceA"`
+	ScorceB     uint64    `json:"ScorceB"`
+	TimeOut     uint32    `json:"TimeOut"`
 	Runplay     bool
 }
 
@@ -33,30 +34,31 @@ var gGameTop *([]GameTopRoom)
 func GameTopRoom_tick() {
 
 	for {
-		time.Sleep(10 * time.Second)
+		time.Sleep(1 * time.Second)
 		lens := len(*gGameTop)
 		for i := 0; i < lens; i++ {
 			if false == (*gGameTop)[i].Runplay {
-				//for test
-				if 0 != (*gGameTop)[i].SocketIdA && (*gGameTop)[i].SocketIdB == 0 {
-					Gpthis := GpManager.GlobaWebSocketListManager
-					o := BeginGameRoom{}
-					o.Id = (*gGameTop)[i].Id
-					o.SocketIdA = (*gGameTop)[i].SocketIdA
-					o.SocketIdB = (*gGameTop)[i].SocketIdA
-					data, _ := json.Marshal(o)
-					Gpthis.MsgList <- Gphandle.GWebSocketStruct.NewByte(Gpthis, GpPacket.IM_C2S_TESTBEGINGAME, (*gGameTop)[i].SocketIdA, string(data))
-				}
 			} else {
+				Gpthis := GpManager.GlobaWebSocketListManager
 				pGameRoom := &((*gGameTop)[i])
-				pGameRoom.TimeOut = pGameRoom.TimeOut - 10
+				pGameRoom.TimeOut = pGameRoom.TimeOut - 1
+				//结尾是0的时候做下一个动作
+				next := (pGameRoom.TimeOut%10 == 0)
+				//检查是否发词
+				if next == true && pGameRoom.TimeOut > 0 {
+					step := (50 - pGameRoom.TimeOut) / 10
+					wordlist := pGameRoom.Wordlist[step]
+					Gpthis.MsgList <- Gphandle.GWebSocketStruct.NewByte(Gpthis, GpPacket.IM_S2C_SENDQUEST, (*gGameTop)[i].SocketIdA, string(wordlist))
+					Gpthis.MsgList <- Gphandle.GWebSocketStruct.NewByte(Gpthis, GpPacket.IM_S2C_SENDQUEST, (*gGameTop)[i].SocketIdB, string(wordlist))
+				}
+				//回收房间
 				if pGameRoom.TimeOut <= 0 {
-					Gpthis := GpManager.GlobaWebSocketListManager
+
 					Gpthis.MsgList <- Gphandle.GWebSocketStruct.NewByte(Gpthis, GpPacket.IM_C2S_GETROOMLIST, (*gGameTop)[i].SocketIdA, string(""))
-					Gpthis.MsgList <- Gphandle.GWebSocketStruct.NewByte(Gpthis, GpPacket.IM_C2S_GETROOMLIST, (*gGameTop)[i].SocketIdA, string(""))
+					Gpthis.MsgList <- Gphandle.GWebSocketStruct.NewByte(Gpthis, GpPacket.IM_C2S_GETROOMLIST, (*gGameTop)[i].SocketIdB, string(""))
 					Clearroom(pGameRoom)
 				}
-				Global.Logger.Info("S2S: GameTopRoom_tick =", pGameRoom.Id)
+				Global.Logger.Info("S2S: GameTopRoom_tick =", pGameRoom.Id, pGameRoom.TimeOut)
 			}
 		}
 	}
@@ -69,7 +71,7 @@ func Clearroom(pGroom *GameTopRoom) {
 	pGroom.SocketIdB = 0
 	pGroom.ScorceA = 0
 	pGroom.ScorceB = 0
-	pGroom.Wordlist = []string{}
+	pGroom.Wordlist = [5]string{}
 	pGroom.PlayAavatar = ""
 	pGroom.PlayBavatar = ""
 }
@@ -89,18 +91,34 @@ func BuildServerRoom(size uint) {
 	}
 
 }
-func ActiveRoom(SocketId uint32) {
+func ActiveRoom(msg GpPacket.IM_rec) {
 	lens := len(*gGameTop)
-	for i := 0; i < lens; i++ {
-		if SocketId == (*gGameTop)[i].SocketIdA {
-			(*gGameTop)[i].Runplay = true
-			(*gGameTop)[i].TimeOut = 50
+	if gjson.Valid(msg.Msg) {
+		result := gjson.Get(msg.Msg, "Msg.quest")
+		Global.Logger.Info("ActiveRoom:", result)
+		wordlist := [5]string{}
+		for i, name := range result.Array() {
+			wordlist[i] = name.String()
 		}
-		if SocketId == (*gGameTop)[i].SocketIdB {
-			(*gGameTop)[i].Runplay = true
-			(*gGameTop)[i].TimeOut = 50
+
+		for i := 0; i < lens; i++ {
+			if msg.SocketId == (*gGameTop)[i].SocketIdA {
+				(*gGameTop)[i].Runplay = true
+				(*gGameTop)[i].TimeOut = 51
+				(*gGameTop)[i].Wordlist = wordlist
+				break
+			} else if msg.SocketId == (*gGameTop)[i].SocketIdB {
+				(*gGameTop)[i].Runplay = true
+				(*gGameTop)[i].TimeOut = 51
+				(*gGameTop)[i].Wordlist = wordlist
+				break
+			} else {
+
+			}
 		}
+
 	}
+
 }
 func GetRoomList() string {
 	lens := len(*gGameTop)

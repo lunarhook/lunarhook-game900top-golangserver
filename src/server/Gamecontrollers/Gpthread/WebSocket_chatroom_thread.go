@@ -56,6 +56,10 @@ func Chatroom(Gpthis *GpManager.WebSocketListController) {
 				GetRoomList(SocketMessage, Gpthis)
 				break
 			case
+				GpPacket.IM_S2C_SENDQUEST:
+				RoomGameRunNext(SocketMessage, Gpthis)
+				break
+			case
 				GpPacket.IM_EVENT_BROADCAST_HEART:
 				Gphandle.GWebSocketStruct.BroadcastWebSocket(SocketMessage, GpManager.GlobaWebSocketListManager)
 				break
@@ -115,6 +119,15 @@ func SelectRoom(msg GpPacket.IM_rec, Gpthis *GpManager.WebSocketListController) 
 		r.SocketIdA = msg.SocketId
 		avatar := gjson.Get(msg.Msg, "Msg.avatarUrl")
 		r.PlayAavatar = avatar.String()
+		if 0 != pRoom.SocketIdA && pRoom.SocketIdB == 0 {
+			Gpthis := GpManager.GlobaWebSocketListManager
+			o := &GpGame.BeginGameRoom{}
+			o.Id = pRoom.Id
+			o.SocketIdA = pRoom.SocketIdA
+			o.SocketIdB = pRoom.SocketIdA
+			//这里是让所有的数据都从房间的A玩家开始传递
+			Gpthis.MsgList <- Gphandle.GWebSocketStruct.NewByte(Gpthis, GpPacket.IM_C2S_TESTBEGINGAME, pRoom.SocketIdA, string(""))
+		}
 	} else {
 		event.Msg = string("IM_S2C_JOINCREATROOM failed")
 	}
@@ -210,8 +223,31 @@ func GetRoomList(msg GpPacket.IM_rec, Gpthis *GpManager.WebSocketListController)
 		}
 	}
 }
+func RoomGameRunNext(msg GpPacket.IM_rec, Gpthis *GpManager.WebSocketListController) {
+	event := GpPacket.IM_rec{}
+	event.Type = GpPacket.IM_S2C_SENDQUEST
+	event.SocketId = msg.SocketId
+	event.Msg = string(msg.Msg)
+	data, err := json.Marshal(event)
+	if err != nil {
+		Global.Logger.Error("Fail to marshal event:", err)
+		return
+	}
+	for sub := Gpthis.ActiveSocketList.Front(); sub != nil; sub = sub.Next() {
+		if sub.Value.(GpManager.SocketInfo).SocketId == event.SocketId {
+			ws := sub.Value.(GpManager.SocketInfo).Conn
+			if ws != nil {
+				if ws.WriteMessage(websocket.TextMessage, data) != nil {
+					// User disconnected.
+					Global.Logger.Trace("disconnected user:", sub.Value.(GpManager.SocketInfo).User)
+					Gpthis.UnSocketChan <- GpManager.UnSocketId{sub.Value.(GpManager.SocketInfo).SocketId}
+				}
+			}
+		}
+	}
+}
 func RoomGameRun(msg GpPacket.IM_rec, Gpthis *GpManager.WebSocketListController) {
-	GpGame.ActiveRoom(msg.SocketId)
+	GpGame.ActiveRoom(msg)
 }
 func BeginRoomGame(msg GpPacket.IM_rec, Gpthis *GpManager.WebSocketListController) {
 	event := GpPacket.IM_rec{}
