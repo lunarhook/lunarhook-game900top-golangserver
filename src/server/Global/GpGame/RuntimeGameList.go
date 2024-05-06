@@ -53,8 +53,8 @@ func GameTopRoom_tick() {
 				}
 				//回收房间
 				if pGameRoom.TimeOut <= 0 {
-					Gpthis.MsgList <- Gphandle.GWebSocketStruct.NewByte(Gpthis, GpPacket.IM_S2C_LEAVEROOM, (*gGameTop)[i].SocketIdA, ("good bye!"), 0)
-					Gpthis.MsgList <- Gphandle.GWebSocketStruct.NewByte(Gpthis, GpPacket.IM_S2C_LEAVEROOM, (*gGameTop)[i].SocketIdB, ("good bye!"), 0)
+					Gpthis.MsgList <- Gphandle.GWebSocketStruct.NewByte(Gpthis, GpPacket.IM_S2C_LEAVEROOM, (*gGameTop)[i].SocketIdA, ("RoomClose!"), 0)
+					Gpthis.MsgList <- Gphandle.GWebSocketStruct.NewByte(Gpthis, GpPacket.IM_S2C_LEAVEROOM, (*gGameTop)[i].SocketIdB, ("RoomClose!"), 0)
 					Clearroom(pGameRoom)
 				}
 				Global.Logger.Info("S2S: GameTopRoom_tick =", pGameRoom.Id, pGameRoom.TimeOut)

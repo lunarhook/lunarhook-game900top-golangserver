@@ -34,7 +34,10 @@ func Chatroom(Gpthis *GpManager.WebSocketListController) {
 
 				break
 			case
-				GpPacket.IM_C2S_LEAVEROOM,
+				GpPacket.IM_C2S_LEAVEROOM:
+				closesocket(SocketMessage, Gpthis)
+				break
+			case
 				GpPacket.IM_S2C_LEAVEROOM: // 关闭房间完成比赛，退出游戏，展示结果
 				LeaveRoom(SocketMessage, Gpthis)
 				break
@@ -177,6 +180,16 @@ func joinroom(msg GpPacket.IM_rec, Gpthis *GpManager.WebSocketListController) {
 		}
 	}
 }
+func closesocket(msg GpPacket.IM_rec, Gpthis *GpManager.WebSocketListController) {
+	for sub := Gpthis.ActiveSocketList.Front(); sub != nil; sub = sub.Next() {
+		if sub.Value.(GpManager.SocketInfo).SocketId == msg.SocketId {
+			ws := sub.Value.(GpManager.SocketInfo).Conn
+			if ws != nil {
+				Gpthis.UnSocketChan <- GpManager.UnSocketId{sub.Value.(GpManager.SocketInfo).SocketId}
+			}
+		}
+	}
+}
 func LeaveRoom(msg GpPacket.IM_rec, Gpthis *GpManager.WebSocketListController) {
 	event := GpPacket.IM_rec{}
 	event.Type = GpPacket.IM_S2C_LEAVEROOM
@@ -194,9 +207,9 @@ func LeaveRoom(msg GpPacket.IM_rec, Gpthis *GpManager.WebSocketListController) {
 			if ws != nil {
 				if ws.WriteMessage(websocket.TextMessage, data) != nil {
 					Global.Logger.Trace("disconnected user:", sub.Value.(GpManager.SocketInfo).User)
+					Gpthis.UnSocketChan <- GpManager.UnSocketId{sub.Value.(GpManager.SocketInfo).SocketId}
 				}
-				// User disconnected.
-				Gpthis.UnSocketChan <- GpManager.UnSocketId{sub.Value.(GpManager.SocketInfo).SocketId}
+
 			}
 		}
 	}
