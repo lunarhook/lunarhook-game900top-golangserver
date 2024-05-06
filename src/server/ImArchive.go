@@ -30,6 +30,7 @@ type IM_rec struct {
 	Type     EventType `json:"Type"`
 	SocketId uint32    `json:"SocketId"`
 	Msg      string    `json:"Msg"`
+	RoomId   uint32    `json:"RoomId"`
 }
 
 const archiveSize = 100

@@ -6,6 +6,7 @@ import (
 	GpPacket "github.com/lunarhook/lunarhook-game900top-golangserver/src/server"
 	"github.com/lunarhook/lunarhook-game900top-golangserver/src/server/Gamecontrollers/GpManager"
 	"github.com/lunarhook/lunarhook-game900top-golangserver/src/server/Global"
+	"github.com/tidwall/gjson"
 	"math/rand"
 	"time"
 )
@@ -41,7 +42,8 @@ func (this *WebSocketStruct) SocketJoin(SocketId uint32, ws *websocket.Conn, Gpt
 		var info GpPacket.IM_rec
 		if err := json.Unmarshal([]byte(p), &info); err == nil {
 			//Gpthis.MsgList <- this.NewMsg(Gpthis, info.Type, info, info.SocketId, info.Msg)
-			Gpthis.MsgList <- this.NewByte(Gpthis, info.Type, info.SocketId, info.Msg)
+			rid := (gjson.Get(info.Msg, "RoomId")).Int()
+			Gpthis.MsgList <- this.NewByte(Gpthis, info.Type, info.SocketId, info.Msg, uint32(rid))
 		} else {
 			Global.Logger.Error("Join", err)
 		}

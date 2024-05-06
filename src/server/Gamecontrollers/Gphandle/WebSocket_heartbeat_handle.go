@@ -13,6 +13,7 @@ func (this *WebSocketStruct) HeartWebSocket(msg GpPacket.IM_rec, Gpthis *GpManag
 	event.Type = GpPacket.IM_C2S2C_HEART
 	event.SocketId = msg.SocketId
 	event.Msg = string(msg.Msg)
+	event.RoomId = msg.RoomId
 	data, err := json.Marshal(event)
 	if err != nil {
 		Global.Logger.Error("Fail to marshal event:", err)

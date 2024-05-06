@@ -11,20 +11,20 @@ import (
 )
 
 type GameTopRoom struct {
-	Id          uint64    `json:"Id"`
+	Id          uint32    `json:"Id"`
 	Wordlist    [5]string `json:"Wordlist"`
 	SocketIdA   uint32    `json:"SocketIdA"`
 	SocketIdB   uint32    `json:"SocketIdB"`
 	PlayAavatar string    `json:"PlayAavatar"`
 	PlayBavatar string    `json:"PlayBavatar"`
-	ScorceA     uint64    `json:"ScorceA"`
-	ScorceB     uint64    `json:"ScorceB"`
+	ScorceA     uint32    `json:"ScorceA"`
+	ScorceB     uint32    `json:"ScorceB"`
 	TimeOut     uint32    `json:"TimeOut"`
 	Runplay     bool
 }
 
 type BeginGameRoom struct {
-	Id        uint64 `json:"Id"`
+	Id        uint32 `json:"Id"`
 	SocketIdA uint32 `json:"SocketIdA"`
 	SocketIdB uint32 `json:"SocketIdB"`
 }
@@ -48,14 +48,13 @@ func GameTopRoom_tick() {
 				if next == true && pGameRoom.TimeOut > 0 {
 					step := (50 - pGameRoom.TimeOut) / 10
 					wordlist := pGameRoom.Wordlist[step]
-					Gpthis.MsgList <- Gphandle.GWebSocketStruct.NewByte(Gpthis, GpPacket.IM_S2C_SENDQUEST, (*gGameTop)[i].SocketIdA, string(wordlist))
-					Gpthis.MsgList <- Gphandle.GWebSocketStruct.NewByte(Gpthis, GpPacket.IM_S2C_SENDQUEST, (*gGameTop)[i].SocketIdB, string(wordlist))
+					Gpthis.MsgList <- Gphandle.GWebSocketStruct.NewByte(Gpthis, GpPacket.IM_S2C_SENDQUEST, (*gGameTop)[i].SocketIdA, string(wordlist), pGameRoom.Id)
+					Gpthis.MsgList <- Gphandle.GWebSocketStruct.NewByte(Gpthis, GpPacket.IM_S2C_SENDQUEST, (*gGameTop)[i].SocketIdB, string(wordlist), pGameRoom.Id)
 				}
 				//回收房间
 				if pGameRoom.TimeOut <= 0 {
-
-					Gpthis.MsgList <- Gphandle.GWebSocketStruct.NewByte(Gpthis, GpPacket.IM_C2S_GETROOMLIST, (*gGameTop)[i].SocketIdA, string(""))
-					Gpthis.MsgList <- Gphandle.GWebSocketStruct.NewByte(Gpthis, GpPacket.IM_C2S_GETROOMLIST, (*gGameTop)[i].SocketIdB, string(""))
+					Gpthis.MsgList <- Gphandle.GWebSocketStruct.NewByte(Gpthis, GpPacket.IM_S2C_LEAVEROOM, (*gGameTop)[i].SocketIdA, ("good bye!"), 0)
+					Gpthis.MsgList <- Gphandle.GWebSocketStruct.NewByte(Gpthis, GpPacket.IM_S2C_LEAVEROOM, (*gGameTop)[i].SocketIdB, ("good bye!"), 0)
 					Clearroom(pGameRoom)
 				}
 				Global.Logger.Info("S2S: GameTopRoom_tick =", pGameRoom.Id, pGameRoom.TimeOut)
@@ -79,7 +78,7 @@ func BuildServerRoom(size uint) {
 	var GameTopRoomList = (make([]GameTopRoom, size))
 	gGameTop = &GameTopRoomList
 	lens := len(*gGameTop)
-	var Roomid = uint64(10000)
+	var Roomid = uint32(10000)
 	for i := 0; i < lens; i++ {
 		if false == (*gGameTop)[i].Runplay {
 			(*gGameTop)[i].Id = Roomid
@@ -123,7 +122,7 @@ func ActiveRoom(msg GpPacket.IM_rec) {
 func GetRoomList() string {
 	lens := len(*gGameTop)
 	type reslist struct {
-		RoomId   uint64 `json:"RoomId"`
+		RoomId   uint32 `json:"RoomId"`
 		Battle   bool   `json:"Battle"`
 		SocketId uint32 `json:"SocketId"`
 	}
@@ -159,11 +158,25 @@ func LeaveRoomBySocketId(SocketId uint32) {
 		}
 	}
 }
-func JoinCreatRoomById(id uint64, mysock uint32) *GameTopRoom {
+func JoinCreatRoomById(id uint32, mysock uint32) *GameTopRoom {
 	lens := len(*gGameTop)
 	for i := 0; i < lens; i++ {
 		if (*gGameTop)[i].SocketIdA == mysock || (*gGameTop)[i].SocketIdB == mysock {
 			return nil
+		}
+	}
+	for i := 0; i < lens; i++ {
+		if false == (*gGameTop)[i].Runplay && id == (*gGameTop)[i].Id {
+			return &(*gGameTop)[i]
+		}
+	}
+	return nil
+}
+func GetRoomById(id uint32, mysock uint32) *GameTopRoom {
+	lens := len(*gGameTop)
+	for i := 0; i < lens; i++ {
+		if (*gGameTop)[i].SocketIdA == mysock || (*gGameTop)[i].SocketIdB == mysock {
+			return &(*gGameTop)[i]
 		}
 	}
 	for i := 0; i < lens; i++ {
