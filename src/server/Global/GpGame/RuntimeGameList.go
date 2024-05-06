@@ -21,6 +21,7 @@ type GameTopRoom struct {
 	ScorceB     uint32    `json:"ScorceB"`
 	TimeOut     uint32    `json:"TimeOut"`
 	Runplay     bool
+	Count       uint32
 }
 
 type BeginGameRoom struct {
@@ -52,7 +53,7 @@ func GameTopRoom_tick() {
 					Gpthis.MsgList <- Gphandle.GWebSocketStruct.NewByte(Gpthis, GpPacket.IM_S2C_SENDQUEST, (*gGameTop)[i].SocketIdB, string(wordlist), pGameRoom.Id)
 				}
 				//回收房间
-				if pGameRoom.TimeOut <= 0 {
+				if pGameRoom.TimeOut <= 0 || pGameRoom.Count >= 2 {
 					Gpthis.MsgList <- Gphandle.GWebSocketStruct.NewByte(Gpthis, GpPacket.IM_S2C_LEAVEROOM, (*gGameTop)[i].SocketIdA, ("RoomClose!"), 0)
 					Gpthis.MsgList <- Gphandle.GWebSocketStruct.NewByte(Gpthis, GpPacket.IM_S2C_LEAVEROOM, (*gGameTop)[i].SocketIdB, ("RoomClose!"), 0)
 					Clearroom(pGameRoom)
@@ -73,6 +74,7 @@ func Clearroom(pGroom *GameTopRoom) {
 	pGroom.Wordlist = [5]string{}
 	pGroom.PlayAavatar = ""
 	pGroom.PlayBavatar = ""
+	pGroom.Count = 0
 }
 func BuildServerRoom(size uint) {
 	var GameTopRoomList = (make([]GameTopRoom, size))
@@ -161,8 +163,11 @@ func LeaveRoomBySocketId(SocketId uint32) {
 func JoinCreatRoomById(id uint32, mysock uint32) *GameTopRoom {
 	lens := len(*gGameTop)
 	for i := 0; i < lens; i++ {
-		if (*gGameTop)[i].SocketIdA == mysock || (*gGameTop)[i].SocketIdB == mysock {
-			return nil
+		//join
+		if (*gGameTop)[i].SocketIdA == mysock {
+			return &(*gGameTop)[i]
+		} else if (*gGameTop)[i].SocketIdB == mysock {
+			return &(*gGameTop)[i]
 		}
 	}
 	for i := 0; i < lens; i++ {

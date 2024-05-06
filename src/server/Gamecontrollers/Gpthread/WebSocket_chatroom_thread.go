@@ -31,7 +31,7 @@ func Chatroom(Gpthis *GpManager.WebSocketListController) {
 			case
 				GpPacket.IM_C2S2C_HEART: // 心跳
 				Gphandle.GWebSocketStruct.HeartWebSocket(SocketMessage, Gpthis)
-
+				GetRoomList(SocketMessage, Gpthis)
 				break
 			case
 				GpPacket.IM_C2S_LEAVEROOM:
@@ -77,7 +77,7 @@ func Chatroom(Gpthis *GpManager.WebSocketListController) {
 				GetRoomList(SocketMessage, Gpthis)
 				break
 			case
-				GpPacket.IM_C2S_TESTBEGINGAME,
+				//GpPacket.IM_C2S_TESTBEGINGAME,
 				GpPacket.IM_S2C_BEGINQUEST:
 				BeginRoomGame(SocketMessage, Gpthis)
 				break
@@ -123,17 +123,23 @@ func SelectRoom(msg GpPacket.IM_rec, Gpthis *GpManager.WebSocketListController) 
 	pRoom := GpGame.JoinCreatRoomById(uint32(RoomId.Uint()), msg.SocketId)
 	if nil != pRoom {
 		r := &(*pRoom)
-		r.SocketIdA = msg.SocketId
-		avatar := gjson.Get(msg.Msg, "Msg.avatarUrl")
-		r.PlayAavatar = avatar.String()
-		if 0 != pRoom.SocketIdA && pRoom.SocketIdB == 0 {
+		if 0 == r.SocketIdA {
+			r.SocketIdA = msg.SocketId
+			avatar := gjson.Get(msg.Msg, "Msg.avatarUrl")
+			r.PlayAavatar = avatar.String()
+		} else if 0 == r.SocketIdB {
+			r.SocketIdB = msg.SocketId
+			avatar := gjson.Get(msg.Msg, "Msg.avatarUrl")
+			r.PlayBavatar = avatar.String()
+		}
+		if 0 != pRoom.SocketIdA && 0 != pRoom.SocketIdB {
 			Gpthis := GpManager.GlobaWebSocketListManager
 			o := &GpGame.BeginGameRoom{}
 			o.Id = pRoom.Id
 			o.SocketIdA = pRoom.SocketIdA
-			o.SocketIdB = pRoom.SocketIdA
+			o.SocketIdB = pRoom.SocketIdB
 			//这里是让所有的数据都从房间的A玩家开始传递
-			Gpthis.MsgList <- Gphandle.GWebSocketStruct.NewByte(Gpthis, GpPacket.IM_C2S_TESTBEGINGAME, pRoom.SocketIdA, string(""), pRoom.Id)
+			Gpthis.MsgList <- Gphandle.GWebSocketStruct.NewByte(Gpthis, GpPacket.IM_S2C_BEGINQUEST, pRoom.SocketIdA, string(""), pRoom.Id)
 		}
 	} else {
 		event.Msg = string("IM_S2C_JOINCREATROOM failed")
@@ -246,6 +252,9 @@ func RoomGameRunUpdate(msg GpPacket.IM_rec, Gpthis *GpManager.WebSocketListContr
 	event.SocketId = msg.SocketId
 	event.RoomId = msg.RoomId
 	pRoom := GpGame.GetRoomById(event.RoomId, event.SocketId)
+	if pRoom.TimeOut < 10 {
+		pRoom.Count = pRoom.Count + 1
+	}
 	answer := gjson.Get(msg.Msg, "Msg.answer").Str
 	for i := 0; i < len(pRoom.Wordlist); i++ {
 		ss := gjson.Get(pRoom.Wordlist[i], "mean").Str
@@ -258,7 +267,7 @@ func RoomGameRunUpdate(msg GpPacket.IM_rec, Gpthis *GpManager.WebSocketListContr
 			}
 		}
 	}
-	ret := map[string]interface{}{"ScorceA": pRoom.ScorceA, "ScorceB": pRoom.ScorceB}
+	ret := map[string]interface{}{"ScorceA": pRoom.ScorceA, "ScorceB": pRoom.ScorceB, "SocketIdA": pRoom.SocketIdA, "SocketIdB": pRoom.SocketIdB}
 	v, _ := json.Marshal(ret)
 	event.Msg = string(v)
 	data, err := json.Marshal(event)
@@ -267,7 +276,7 @@ func RoomGameRunUpdate(msg GpPacket.IM_rec, Gpthis *GpManager.WebSocketListContr
 		return
 	}
 	for sub := Gpthis.ActiveSocketList.Front(); sub != nil; sub = sub.Next() {
-		if sub.Value.(GpManager.SocketInfo).SocketId == event.SocketId {
+		if sub.Value.(GpManager.SocketInfo).SocketId == pRoom.SocketIdA || sub.Value.(GpManager.SocketInfo).SocketId == pRoom.SocketIdB {
 			ws := sub.Value.(GpManager.SocketInfo).Conn
 			if ws != nil {
 				if ws.WriteMessage(websocket.TextMessage, data) != nil {
