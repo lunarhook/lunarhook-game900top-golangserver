@@ -141,8 +141,12 @@ func SelectRoom(msg GpPacket.IM_rec, Gpthis *GpManager.WebSocketListController) 
 			//这里是让所有的数据都从房间的A玩家开始传递
 			Gpthis.MsgList <- Gphandle.GWebSocketStruct.NewByte(Gpthis, GpPacket.IM_S2C_BEGINQUEST, pRoom.SocketIdA, string(""), pRoom.Id)
 		}
+		ret := map[string]interface{}{"AvatarA": pRoom.PlayAavatar, "AvatarB": pRoom.PlayBavatar, "SocketIdA": pRoom.SocketIdA, "SocketIdB": pRoom.SocketIdB}
+		v, _ := json.Marshal(ret)
+		event.Msg = string(v)
 	} else {
 		event.Msg = string("IM_S2C_JOINCREATROOM failed")
+		return
 	}
 	data, err := json.Marshal(event)
 	//JoinCreatRoomById
@@ -151,7 +155,7 @@ func SelectRoom(msg GpPacket.IM_rec, Gpthis *GpManager.WebSocketListController) 
 		return
 	}
 	for sub := Gpthis.ActiveSocketList.Front(); sub != nil; sub = sub.Next() {
-		if sub.Value.(GpManager.SocketInfo).SocketId == event.SocketId {
+		if sub.Value.(GpManager.SocketInfo).SocketId == pRoom.SocketIdA || sub.Value.(GpManager.SocketInfo).SocketId == pRoom.SocketIdB {
 			ws := sub.Value.(GpManager.SocketInfo).Conn
 			if ws != nil {
 				if ws.WriteMessage(websocket.TextMessage, data) != nil {
