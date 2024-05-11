@@ -2,7 +2,7 @@
 export PATH=$PATH:/usr/local/go/bin
 git pull
 cd src/main/
-go build -o game900top main.go
+go build -o game900top main.go 
 cd ..
 cd ..
 
