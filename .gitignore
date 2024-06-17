@@ -24,3 +24,4 @@ go.work
 .idea/
 src/main/game900top
 game900top
+.DS_Store
